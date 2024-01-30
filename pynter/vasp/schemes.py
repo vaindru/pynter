@@ -222,15 +222,38 @@ class InputSets:
         vaspjob.incar['ISYM'] = 3
         return vaspjob
 
-    def hubbard(self, ldauu_dict, setname, pathname):
+    def hubbard(self, setname: str, pathname: str,
+                ldauu_dict: dict[float],
+                ldauj_dict: dict[float] = None,
+                ldautype: int = None,
+                lmaxmix: int = None,
+                ldauprint: int = 1):
         """
-        Set for standard PBE+U calculation. The dict {Element:U_value} is used to construct the INCAR
+
+        Parameters
+        ----------
+        setname: name for VaspJob
+        pathname: path to VaspJob
+        ldauu_dict: dict of LDAUU parameters
+        ldauj_dict: (optional) dict of LDAUJ parameters
+        ldautype: (optional) overide LDAUTYPE=2 or LDAUTYPE=3 when LDAUJ parameters are used
+        lmaxmix: (optional) overide LMAXMIX=2 or LMAXMIX=4 when LDAUJ parameters are used
+        ldauprint: (optional) default LDAUPRINT=1
+
+        Returns
+        -------
+        VaspJob object
         """
         vaspjob = self.get_vaspjob(setname, pathname)
         vaspjob.incar['LDAU'] = '.TRUE.'
-        vaspjob.incar['LDAUTYPE'] = 2
-        vaspjob.incar['LDAUPRINT'] = 2
+        vaspjob.incar['LDAUPRINT'] = ldauprint
+        vaspjob.incar['LMAXMIX'] = 2 if lmaxmix is None else lmaxmix
         vaspjob.incar['LDAUU'] = ' '.join([str(ldauu_dict[el]) for el in ldauu_dict])
+        if ldauj_dict is not None:
+            vaspjob.incar['LDAUTYPE'] = 3 if ldautype is None else ldautype
+            vaspjob.incar['LDAUJ'] = ' '.join([str(ldauj_dict[el]) for el in ldauj_dict])
+        else:
+            vaspjob.incar['LDAUTYPE'] = 2 if ldautype is None else ldautype
         return vaspjob
 
     def pbe_bs(self, kpoints_bs=None, setname='PBE-BS', pathname='PBE-BS', **kwargs):
