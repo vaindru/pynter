@@ -142,7 +142,9 @@ class Job:
         pass
 
     def job_id(self):
-        """Get job ID from the queue on HPC"""
+        """
+        Get job ID from the queue on HPC
+        """
         hpc = HPCInterface()
         stdout, stderr = hpc.qstat(printout=False)
         queue = stdout.splitlines()

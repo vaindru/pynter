@@ -232,8 +232,8 @@ class InputSets:
 
         Parameters
         ----------
-        setname: name for VaspJob
-        pathname: path to VaspJob
+        setname: setname for VaspJob
+        pathname: pathname for VaspJob
         ldauu_dict: dict of LDAUU parameters
         ldauj_dict: (optional) dict of LDAUJ parameters
         ldautype: (optional) overide LDAUTYPE=2 or LDAUTYPE=3 when LDAUJ parameters are used
@@ -737,7 +737,9 @@ class Schemes(InputSets):
         jobs.append(vaspjob)
         return jobs
 
-    def hubbard_tuning(self, specie, ldauu_dict=None, u_range=(1, 10), scheme_name='U_tuning'):
+    def hubbard_tuning(self, specie: str, scheme_name='U_tuning',
+                       ldauu_dict: dict = None, u_range: tuple = (1, 10),
+                       ldauj_dict: dict = None, j_range: tuple = None):
         """
         Generates Scheme for many calculations using different Hubbard corrections
 
