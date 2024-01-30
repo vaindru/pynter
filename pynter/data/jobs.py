@@ -104,6 +104,14 @@ class Job:
                               outputs=outputs, job_script_filename=job_script_filename,
                               name=name)
 
+    def set_path(self, path: str, path_in_hpc: str = None):
+        self.path = path
+        self.path_relative = op.abspath(self.path).replace(self._localdir, '')
+        if path_in_hpc is None:
+            self.path_in_hpc = self._workdir + self.path_relative
+        else:
+            self.path_in_hpc = path_in_hpc
+
     def delete_job_files(self, safety=True):
         """
         Delete Job folder (self.path)
@@ -306,7 +314,7 @@ class Job:
         return status
 
     @abstractmethod
-    def write_input():
+    def write_input(self):
         pass
 
 
