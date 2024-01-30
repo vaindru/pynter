@@ -223,8 +223,9 @@ class InputSets:
         return vaspjob
 
     def hubbard(self, setname: str, pathname: str,
-                ldauu_dict: dict[float],
-                ldauj_dict: dict[float] = None,
+                ldauu_dict: dict[Element: float],
+                ldauj_dict: dict[Element: float] = None,
+                ldaul_dict: dict[Element: int] = None,
                 ldautype: int = None,
                 lmaxmix: int = None,
                 ldauprint: int = 1):
@@ -236,6 +237,7 @@ class InputSets:
         pathname: pathname for VaspJob
         ldauu_dict: dict of LDAUU parameters
         ldauj_dict: (optional) dict of LDAUJ parameters
+        ldaul_dict: (optional) dict of LDAUL parameters
         ldautype: (optional) overide LDAUTYPE=2 or LDAUTYPE=3 when LDAUJ parameters are used
         lmaxmix: (optional) overide LMAXMIX=2 or LMAXMIX=4 when LDAUJ parameters are used
         ldauprint: (optional) default LDAUPRINT=1
@@ -249,17 +251,22 @@ class InputSets:
         vaspjob.incar['LDAUPRINT'] = ldauprint
         vaspjob.incar['LMAXMIX'] = 2 if lmaxmix is None else lmaxmix
         vaspjob.incar['LDAUU'] = ' '.join([str(ldauu_dict[el]) for el in ldauu_dict])
+
         if ldauj_dict is not None:
             vaspjob.incar['LDAUTYPE'] = 3 if ldautype is None else ldautype
             vaspjob.incar['LDAUJ'] = ' '.join([str(ldauj_dict[el]) for el in ldauj_dict])
         else:
             vaspjob.incar['LDAUTYPE'] = 2 if ldautype is None else ldautype
+
+        if ldaul_dict is not None:
+            vaspjob.incar['LDAUL'] = ' '.join([str(ldaul_dict[el]) for el in ldaul_dict])
+
         return vaspjob
 
     def pbe_bs(self, kpoints_bs=None, setname='PBE-BS', pathname='PBE-BS', **kwargs):
         """
         Set up band structure calculation with PBE
-        
+
         Parameters
         ----------
         kpoints_bs : (Pymatgen Kpoints object) , optional
@@ -737,22 +744,21 @@ class Schemes(InputSets):
         jobs.append(vaspjob)
         return jobs
 
-    def hubbard_tuning(self, specie: str, scheme_name='U_tuning',
-                       ldauu_dict: dict = None, u_range: tuple = (1, 10),
-                       ldauj_dict: dict = None, j_range: tuple = None):
+    # noinspection PyTypeChecker
+    def hubbard_tuning(self, specie: str, orbital: int,
+                       u_range: tuple[float] = tuple(range(1, 11)), ldauu_dict: dict = None,
+                       j_range: tuple[float] = None, ldauj_dict: dict = None, **kwargs):
         """
         Generates Scheme for many calculations using different Hubbard corrections
 
         Parameters
         ----------
-        specie : (str)
-            Symbol of atomic specie to apply changes on U parameter.
-        ldauu_dict : (dict), optional
-            Dictionary of U parameters. Keys are pymatgen Element objects, values are the associated U parameters. The default is None.
-        u_range : (Tuple), optional
-            Tuple with range of U parameter to scan. The default is (1,10).
-        scheme_name : (str), optional
-            Name for scheme. The default is "U_tuning".
+        specie : Sybol of atomic specie to apply changes on U-J parameter.
+        orbital: Which orbital to apply the U-J parameter (sets LDAUL)
+        ldauu_dict : (optional) Sets initial LDAUU parameters. Default 0 to all elements.
+        u_range : (optional) Tuple of U parameters to scan. Defaut is range(1,11).
+        ldauj_dict: (optional) Sets initial LDAUJ parameters. Default 0 to all elements.
+        j_range: (optional) Tuple of J parameters to apply.
 
         Returns
         -------
@@ -761,18 +767,34 @@ class Schemes(InputSets):
         jobs = []
 
         if ldauu_dict is None:
-            ldauu_dict = {}
-            for el in self.structure.composition.elements:
-                ldauu_dict[el] = 0
+            ldauu_dict = {el: 0 for el in self.structure.composition.elements}
         else:
             if len(ldauu_dict) != len(self.structure.composition.elements):
                 raise ValueError('size of "ldauu_dict" needs to be the same as the number of species in Structure')
 
-        for u in range(u_range[0], u_range[1] + 1):
+        if ldauj_dict is None and j_range is not None:
+            ldauj_dict = {el: 0 for el in self.structure.composition.elements}
+        else:
+            if len(ldauj_dict) != len(self.structure.composition.elements):
+                raise ValueError('size of "ldauj_dict" needs to be the same as the number of species in Structure')
+
+        ldaul_dict = {el: -1 for el in self.structure.composition.elements}
+        ldaul_dict[Element(specie)] = orbital
+
+        for u in u_range:
             ldauu_dict[Element(specie)] = u
-            stepname = f'U{u}'
-            vaspjob = self.hubbard(ldauu_dict, setname=stepname, pathname=stepname)
-            jobs.append(vaspjob)
+            if j_range is not None:
+                for j in j_range:
+                    ldauj_dict[Element(specie)] = j
+                    stepname = f'U{u}J{j}'
+                    vaspjob = self.hubbard(setname=stepname, pathname=stepname, ldaul_dict=ldaul_dict,
+                                           ldauu_dict=ldauu_dict, ldauj_dict=ldauj_dict, **kwargs)
+                    jobs.append(vaspjob)
+            else:
+                stepname = f'U{u}'
+                vaspjob = self.hubbard(setname=stepname, pathname=stepname, ldaul_dict=ldaul_dict,
+                                       ldauu_dict=ldauu_dict, **kwargs)
+                jobs.append(vaspjob)
 
         return jobs
 
