@@ -104,7 +104,25 @@ class Job:
                               outputs=outputs, job_script_filename=job_script_filename,
                               name=name)
 
+    def set_name(self, name: str):
+        """
+        Set job name (update job_settings)
+        Parameters
+        ----------
+        name: job name
+
+        """
+        self.name = name
+        self.job_settings['slurm']['job-name'] = self.name
+
     def set_path(self, path: str, path_in_hpc: str = None):
+        """
+        Set job path
+        Parameters
+        ----------
+        path: local path
+        path_in_hpc: (optional) path in HPC by default is relative in working directory
+        """
         self.path = path
         self.path_relative = op.abspath(self.path).replace(self._localdir, '')
         if path_in_hpc is None:
