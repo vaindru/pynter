@@ -2,6 +2,7 @@ from abc import abstractmethod
 import os
 import os.path as op
 import shutil
+import re
 
 from pynter.slurm.job_settings import JobSettings
 from pynter.slurm.interface import HPCInterface
@@ -31,6 +32,7 @@ class Job:
 
         """
 
+        self._id = None
         self.path = path if path else os.getcwd()
         self.inputs = inputs
         self.job_settings = JobSettings(**job_settings) if job_settings else JobSettings()
@@ -167,15 +169,31 @@ class Job:
     def insert_in_database(self):
         pass
 
-    def job_id(self):
+    def job_id(self, from_output=False):
         """
         Get job ID from the queue on HPC
         """
+
+        if self._id is not None:
+            return self._id
+
         hpc = HPCInterface()
+
+        if from_output:
+            out_pattern = self.job_settings['slurm']['output'].split('%j')[0]
+            if not out_pattern:
+                raise ValueError('Output files must end with "%j"')
+            command = f'find {self.path_in_hpc} -type f -name "{out_pattern}*"'
+            stdout, stderr = hpc.command(cmd=command, printout=False)
+            if not stdout:
+                raise ValueError(f'job named "{self.name}" has no output files')
+            self._id = int(stdout.splitlines()[-1].split(out_pattern)[-1])
+            return self._id
+
         stdout, stderr = hpc.qstat(printout=False)
         queue = stdout.splitlines()
         job_lines = grep_list(self.name, queue)
-        if job_lines == []:
+        if not job_lines:
             raise ValueError(f'Job named "{self.name}" is not currently running or pending')
         elif len(job_lines) > 1:
             raise ValueError(f'More than one job named "{self.name}" has been found in queue:\n{stdout}')
@@ -183,7 +201,8 @@ class Job:
             job_line = job_lines[0].split()
             job_id = job_line[0]
 
-        return job_id
+        self._id = job_id
+        return self._id
 
     def job_queue(self):
         """
@@ -225,6 +244,7 @@ class Job:
         if sync:
             self.sync_to_hpc()
         stdout, stderr = hpc.sbatch(path=self.path_in_hpc, job_script_filename=self.job_script_filename)
+        self._id = int(re.search(r'\nSubmitted batch job\s(.*?)\n', stdout)[1])
 
         return stdout, stderr
 
@@ -301,7 +321,7 @@ class Job:
         """
         queue = stdout.splitlines()
         job_lines = grep_list(self.name, queue)
-        if job_lines == []:
+        if not job_lines:
             status = 'NOT IN QUEUE'
         elif len(job_lines) > 1:
             raise ValueError(f'More than one job named "{self.name}" has been found in queue:\n{stdout}')
@@ -319,16 +339,26 @@ class Job:
 
     def status(self):
         """
-        Get job status from HPC. Gets queue from HPC and gets Job status from the queue.
+        Get job status from HPC.
 
         Returns
         -------
         status : (str)
-            Job status. Possible status are 'PENDING','RUNNING','NOT IN QUEUE'.
+            Job status. Possible status are 'PENDING','RUNNING','NOT IN QUEUE','FAILED','COMPLETED'.
         """
+        if self._id is None:
+            self.job_id()
+
         hpc = HPCInterface()
-        stdout, stderr = hpc.qstat(printout=False)
-        status = self.get_status_from_queue(stdout)
+        stdout, stderr = hpc.command(cmd=f"sacct -j {self._id} --brief", printout=False)
+        lines = [line.split() for line in stdout.splitlines()[2:]]
+
+        status = None
+        for split_line in lines:
+            if split_line[0] == str(self._id):
+                status = split_line[1]
+                break
+
         return status
 
     @abstractmethod
