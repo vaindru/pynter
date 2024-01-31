@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
@@ -256,13 +257,20 @@ class DatasetAnalysis:
         U_list = []
         lattice_parameters = set(lattice_parameters)
         lattice_param_values = {p: [] for p in lattice_parameters}
-        band_gaps = []
+        energy_gap = []
         for j in self.jobs:
             U_list.append(j.hubbards[el])
             lattice = j.final_structure.lattice
             for l_param in lattice_parameters:
                 lattice_param_values[l_param].append(getattr(lattice, l_param))
-            band_gaps.append(j.energy_gap)
+            energy_gap.append(j.energy_gap)
+
+        df = pd.DataFrame()
+        df['U'] = U_list
+        for l_param in lattice_param_values:
+            df[l_param] = lattice_param_values[l_param]
+        df['energy_gap'] = energy_gap
+        df = df.sort_values('U')
 
         fig, (ax_lat, ax_egap) = plt.subplots(1, 2, sharex=True, figsize=(12, 8))
 
@@ -270,13 +278,13 @@ class DatasetAnalysis:
         ax_lat.set_xlabel(x_label)
         ax_lat.set_ylabel('($\AA$)')
         for l_param in lattice_param_values:
-            ax_lat.plot(U_list, lattice_param_values[l_param], 'o--')
+            ax_lat.plot(df['U'].to_list(), df[l_param].to_list(), 'o--')
         ax_lat.legend(lattice_param_values.keys())
         ax_lat.grid()
 
         ax_egap.set_xlabel(x_label)
         ax_egap.set_ylabel('Energy gap (eV)')
-        ax_egap.plot(U_list, band_gaps, 'o--')
+        ax_egap.plot(df['U'].to_list(), df['energy_gap'].to_list(), 'o--')
         ax_egap.grid()
 
         if ref_egap is not None:
