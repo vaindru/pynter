@@ -25,25 +25,24 @@ from pynter.cli.phase_diagram import setup_phase_diagram
 def main():
     """
     Handle main.
-    """    
+    """
     parser = argparse.ArgumentParser(
         description="""
         This script works based on several sub-commands with their own options.
         To see the options for the sub-commands, type "pynter sub-command -h".
         """
-        )
+    )
 
     subparsers = parser.add_subparsers()
-    
+
     homedir = os.getenv("HOME")
-    config_exists = os.path.exists(os.path.join(homedir,'.pynter/config.yml'))
-    config_vasp_exists = os.path.exists(os.path.join(homedir,'.pynter/vasp.yml'))
+    config_exists = os.path.exists(os.path.join(homedir, '.pynter/config.yml'))
+    config_vasp_exists = os.path.exists(os.path.join(homedir, '.pynter/vasp.yml'))
     if config_exists is False and config_vasp_exists is False:
         warnings.warn('configuration files do not exist, run "pynter configure" in the terminal to create them')
 
-
     setup_analysis(subparsers)
-    setup_automation(subparsers)  
+    setup_automation(subparsers)
     setup_config(subparsers)
     setup_defects(subparsers)
     setup_hpc(subparsers)
@@ -52,15 +51,16 @@ def main():
     setup_mp_database(subparsers)
     setup_phase_diagram(subparsers)
     setup_plotter(subparsers)
-    
+
     args = parser.parse_args()
-    
+
     try:
         args.func
     except AttributeError:
         parser.print_help()
         raise SystemExit("Please specify a command.")
     return args.func(args)
+
 
 if __name__ == '__main__':
     main()

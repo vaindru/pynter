@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import functools
@@ -90,11 +89,11 @@ class DOS(Spectrum):
         if vbm_start == cbm_start:
             return 0.0, self.efermi, self.efermi
         # Interpolate between adjacent values
-        terminal_dens = tdos[vbm_start : vbm_start + 2][::-1]
-        terminal_energies = energies[vbm_start : vbm_start + 2][::-1]
+        terminal_dens = tdos[vbm_start: vbm_start + 2][::-1]
+        terminal_energies = energies[vbm_start: vbm_start + 2][::-1]
         start = get_linear_interpolated_value(terminal_dens, terminal_energies, tol)
-        terminal_dens = tdos[cbm_start - 1 : cbm_start + 1]
-        terminal_energies = energies[cbm_start - 1 : cbm_start + 1]
+        terminal_dens = tdos[cbm_start - 1: cbm_start + 1]
+        terminal_energies = energies[cbm_start - 1: cbm_start + 1]
         end = get_linear_interpolated_value(terminal_dens, terminal_energies, tol)
         return end - start, end, start
 
@@ -189,7 +188,7 @@ class Dos(MSONable):
     """
 
     def __init__(
-        self, efermi: float, energies: ArrayLike, densities: Mapping[Spin, ArrayLike], norm_vol: float | None = None
+            self, efermi: float, energies: ArrayLike, densities: Mapping[Spin, ArrayLike], norm_vol: float | None = None
     ) -> None:
         """
         Args:
@@ -304,11 +303,11 @@ class Dos(MSONable):
             return 0.0, self.efermi, self.efermi
 
         # Interpolate between adjacent values
-        terminal_dens = tdos[vbm_start : vbm_start + 2][::-1]
-        terminal_energies = energies[vbm_start : vbm_start + 2][::-1]
+        terminal_dens = tdos[vbm_start: vbm_start + 2][::-1]
+        terminal_energies = energies[vbm_start: vbm_start + 2][::-1]
         start = get_linear_interpolated_value(terminal_dens, terminal_energies, tol)
-        terminal_dens = tdos[cbm_start - 1 : cbm_start + 1]
-        terminal_energies = energies[cbm_start - 1 : cbm_start + 1]
+        terminal_dens = tdos[cbm_start - 1: cbm_start + 1]
+        terminal_energies = energies[cbm_start - 1: cbm_start + 1]
         end = get_linear_interpolated_value(terminal_dens, terminal_energies, tol)
         return end - start, end, start
 
@@ -407,11 +406,11 @@ class FermiDos(Dos, MSONable):
     """
 
     def __init__(
-        self,
-        dos: Dos,
-        structure: Structure | None = None,
-        nelecs: float | None = None,
-        bandgap: float | None = None,
+            self,
+            dos: Dos,
+            structure: Structure | None = None,
+            nelecs: float | None = None,
+            bandgap: float | None = None,
     ):
         """
         Args:
@@ -483,9 +482,9 @@ class FermiDos(Dos, MSONable):
             (p-type doping).
         """
         cb_integral = np.sum(
-            self.tdos[self.idx_cbm :]
-            * f0(self.energies[self.idx_cbm :], fermi_level, temperature)
-            * self.de[self.idx_cbm :],
+            self.tdos[self.idx_cbm:]
+            * f0(self.energies[self.idx_cbm:], fermi_level, temperature)
+            * self.de[self.idx_cbm:],
             axis=0,
         )
         vb_integral = np.sum(
@@ -494,10 +493,10 @@ class FermiDos(Dos, MSONable):
             * self.de[: self.idx_vbm + 1],
             axis=0,
         )
-        return (vb_integral - cb_integral) / (self.volume * self.A_to_cm**3)
+        return (vb_integral - cb_integral) / (self.volume * self.A_to_cm ** 3)
 
     def get_fermi_interextrapolated(
-        self, concentration: float, temperature: float, warn: bool = True, c_ref: float = 1e10, **kwargs
+            self, concentration: float, temperature: float, warn: bool = True, c_ref: float = 1e10, **kwargs
     ) -> float:
         """
         Similar to get_fermi except that when get_fermi fails to converge,
@@ -550,13 +549,13 @@ class FermiDos(Dos, MSONable):
             return f_new + slope * (clog - c_newlog)
 
     def get_fermi(
-        self,
-        concentration: float,
-        temperature: float,
-        rtol: float = 0.01,
-        nstep: int = 50,
-        step: float = 0.1,
-        precision: int = 8,
+            self,
+            concentration: float,
+            temperature: float,
+            rtol: float = 0.01,
+            nstep: int = 50,
+            step: float = 0.1,
+            precision: int = 8,
     ) -> float:
         """
         Finds the fermi level at which the doping concentration at the given
@@ -612,7 +611,7 @@ class FermiDos(Dos, MSONable):
             "efermi": self.efermi,
             "energies": self.energies.tolist(),
             "densities": {str(spin): dens.tolist() for spin, dens in self.densities.items()},
-            "structure": self.structure.as_dict(), # fix
+            "structure": self.structure.as_dict(),  # fix
             "nelecs": self.nelecs,
         }
 
@@ -634,11 +633,11 @@ class CompleteDos(Dos):
     """
 
     def __init__(
-        self,
-        structure: Structure,
-        total_dos: Dos,
-        pdoss: Mapping[PeriodicSite, Mapping[Orbital, Mapping[Spin, ArrayLike]]],
-        normalize: bool = False,
+            self,
+            structure: Structure,
+            total_dos: Dos,
+            pdoss: Mapping[PeriodicSite, Mapping[Orbital, Mapping[Spin, ArrayLike]]],
+            normalize: bool = False,
     ) -> None:
         """
         Args:
@@ -826,11 +825,11 @@ class CompleteDos(Dos):
         return abs(spin_polarization)
 
     def get_band_filling(
-        self,
-        band: OrbitalType = OrbitalType.d,
-        elements: list[SpeciesLike] | None = None,
-        sites: list[PeriodicSite] | None = None,
-        spin: Spin | None = None,
+            self,
+            band: OrbitalType = OrbitalType.d,
+            elements: list[SpeciesLike] | None = None,
+            sites: list[PeriodicSite] | None = None,
+            spin: Spin | None = None,
     ) -> float:
         """
         Compute the orbital-projected band filling, defined as the zeroth moment
@@ -875,12 +874,12 @@ class CompleteDos(Dos):
         return np.trapz(dos_densities[energies < 0], x=energies[energies < 0]) / np.trapz(dos_densities, x=energies)
 
     def get_band_center(
-        self,
-        band: OrbitalType = OrbitalType.d,
-        elements: list[SpeciesLike] | None = None,
-        sites: list[PeriodicSite] | None = None,
-        spin: Spin | None = None,
-        erange: list[float] | None = None,
+            self,
+            band: OrbitalType = OrbitalType.d,
+            elements: list[SpeciesLike] | None = None,
+            sites: list[PeriodicSite] | None = None,
+            spin: Spin | None = None,
+            erange: list[float] | None = None,
     ) -> float:
         """
         Compute the orbital-projected band center, defined as the first moment
@@ -905,12 +904,12 @@ class CompleteDos(Dos):
         return self.get_n_moment(1, elements=elements, sites=sites, band=band, spin=spin, erange=erange, center=False)
 
     def get_band_width(
-        self,
-        band: OrbitalType = OrbitalType.d,
-        elements: list[SpeciesLike] | None = None,
-        sites: list[PeriodicSite] | None = None,
-        spin: Spin | None = None,
-        erange: list[float] | None = None,
+            self,
+            band: OrbitalType = OrbitalType.d,
+            elements: list[SpeciesLike] | None = None,
+            sites: list[PeriodicSite] | None = None,
+            spin: Spin | None = None,
+            erange: list[float] | None = None,
     ) -> float:
         """
         Get the orbital-projected band width, defined as the square root of the second moment
@@ -933,12 +932,12 @@ class CompleteDos(Dos):
         return np.sqrt(self.get_n_moment(2, elements=elements, sites=sites, band=band, spin=spin, erange=erange))
 
     def get_band_skewness(
-        self,
-        band: OrbitalType = OrbitalType.d,
-        elements: list[SpeciesLike] | None = None,
-        sites: list[PeriodicSite] | None = None,
-        spin: Spin | None = None,
-        erange: list[float] | None = None,
+            self,
+            band: OrbitalType = OrbitalType.d,
+            elements: list[SpeciesLike] | None = None,
+            sites: list[PeriodicSite] | None = None,
+            spin: Spin | None = None,
+            erange: list[float] | None = None,
     ) -> float:
         """
         Get the orbital-projected skewness, defined as the third standardized moment
@@ -965,12 +964,12 @@ class CompleteDos(Dos):
         ) / self.get_n_moment(2, elements=elements, sites=sites, band=band, spin=spin, erange=erange) ** (3 / 2)
 
     def get_band_kurtosis(
-        self,
-        band: OrbitalType = OrbitalType.d,
-        elements: list[SpeciesLike] | None = None,
-        sites: list[PeriodicSite] | None = None,
-        spin: Spin | None = None,
-        erange: list[float] | None = None,
+            self,
+            band: OrbitalType = OrbitalType.d,
+            elements: list[SpeciesLike] | None = None,
+            sites: list[PeriodicSite] | None = None,
+            spin: Spin | None = None,
+            erange: list[float] | None = None,
     ) -> float:
         """
         Get the orbital-projected kurtosis, defined as the fourth standardized moment
@@ -993,19 +992,19 @@ class CompleteDos(Dos):
             Orbital-projected kurtosis in eV
         """
         return (
-            self.get_n_moment(4, elements=elements, sites=sites, band=band, spin=spin, erange=erange)
-            / self.get_n_moment(2, elements=elements, sites=sites, band=band, spin=spin, erange=erange) ** 2
+                self.get_n_moment(4, elements=elements, sites=sites, band=band, spin=spin, erange=erange)
+                / self.get_n_moment(2, elements=elements, sites=sites, band=band, spin=spin, erange=erange) ** 2
         )
 
     def get_n_moment(
-        self,
-        n: int,
-        band: OrbitalType = OrbitalType.d,
-        elements: list[SpeciesLike] | None = None,
-        sites: list[PeriodicSite] | None = None,
-        spin: Spin | None = None,
-        erange: list[float] | None = None,
-        center: bool = True,
+            self,
+            n: int,
+            band: OrbitalType = OrbitalType.d,
+            elements: list[SpeciesLike] | None = None,
+            sites: list[PeriodicSite] | None = None,
+            spin: Spin | None = None,
+            erange: list[float] | None = None,
+            center: bool = True,
     ) -> float:
         """
         Get the nth moment of the DOS centered around the orbital-projected band center, defined as
@@ -1061,13 +1060,13 @@ class CompleteDos(Dos):
             p = energies
 
         # Take the nth moment
-        return np.trapz(p**n * dos_densities, x=energies) / np.trapz(dos_densities, x=energies)
+        return np.trapz(p ** n * dos_densities, x=energies) / np.trapz(dos_densities, x=energies)
 
     def get_hilbert_transform(
-        self,
-        band: OrbitalType = OrbitalType.d,
-        elements: list[SpeciesLike] | None = None,
-        sites: list[PeriodicSite] | None = None,
+            self,
+            band: OrbitalType = OrbitalType.d,
+            elements: list[SpeciesLike] | None = None,
+            sites: list[PeriodicSite] | None = None,
     ) -> Dos:
         """Return the Hilbert transform of the orbital-projected density of states,
         often plotted for a Newns-Anderson analysis.
@@ -1106,12 +1105,12 @@ class CompleteDos(Dos):
         return Dos(self.efermi, self.energies, densities_transformed)
 
     def get_upper_band_edge(
-        self,
-        band: OrbitalType = OrbitalType.d,
-        elements: list[SpeciesLike] | None = None,
-        sites: list[PeriodicSite] | None = None,
-        spin: Spin | None = None,
-        erange: list[float] | None = None,
+            self,
+            band: OrbitalType = OrbitalType.d,
+            elements: list[SpeciesLike] | None = None,
+            sites: list[PeriodicSite] | None = None,
+            spin: Spin | None = None,
+            erange: list[float] | None = None,
     ) -> float:
         """
         Get the orbital-projected upper band edge. The definition by Xin et al.
@@ -1144,13 +1143,13 @@ class CompleteDos(Dos):
         return energies[np.argmax(densities)]
 
     def get_dos_fp(
-        self,
-        type: str = "summed_pdos",
-        binning: bool = True,
-        min_e: float | None = None,
-        max_e: float | None = None,
-        n_bins: int = 256,
-        normalize: bool = True,
+            self,
+            type: str = "summed_pdos",
+            binning: bool = True,
+            min_e: float | None = None,
+            max_e: float | None = None,
+            n_bins: int = 256,
+            normalize: bool = True,
     ) -> NamedTuple:
         """
         Generates the DOS fingerprint based on work of
@@ -1248,12 +1247,12 @@ class CompleteDos(Dos):
 
     @staticmethod
     def get_dos_fp_similarity(
-        fp1: NamedTuple,
-        fp2: NamedTuple,
-        col: int = 1,
-        pt: int | str = "All",
-        normalize: bool = False,
-        tanimoto: bool = False,
+            fp1: NamedTuple,
+            fp2: NamedTuple,
+            col: int = 1,
+            pt: int | str = "All",
+            normalize: bool = False,
+            tanimoto: bool = False,
     ) -> float:
         """Calculates the similarity index (dot product) of two fingerprints.
 
@@ -1307,7 +1306,7 @@ class CompleteDos(Dos):
         for i in range(len(d["pdos"])):
             at = struct[i]
             orb_dos = {}
-            orbital_class = Orbital if True in (len(key)>1 for key in d["pdos"][i].keys()) else OrbitalType #fix
+            orbital_class = Orbital if True in (len(key) > 1 for key in d["pdos"][i].keys()) else OrbitalType  # fix
             for orb_str, odos in d["pdos"][i].items():
                 orb = orbital_class[orb_str]
                 orb_dos[orb] = {Spin(int(k)): v for k, v in odos["densities"].items()}

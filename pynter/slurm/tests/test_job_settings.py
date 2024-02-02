@@ -16,9 +16,8 @@ from pynter.testing.slurm import JobSettingsTest
 
 
 class TestJobSettings(PynterTest):
-    
-    def setUp(self):
 
+    def setUp(self):
         self.script_string = (
             "#!/bin/sh\n"
             "#SBATCH --account=projecttest0000\n"
@@ -58,7 +57,7 @@ class TestJobSettings(PynterTest):
             "test_BODY\n"
             "test_BODY2\n"
         )
-        
+
         self.slurm_kwargs = {
             'ntasks': 96,
             'mail-user': 'test@pynter.com',
@@ -67,38 +66,26 @@ class TestJobSettings(PynterTest):
             'output': 'out.%j',
             'account': 'projecttest0000',
             'time': '24:00:00'
-             }
-        
-        self.js = JobSettings(filename='job_test.sh',array_size=2,
-                                modules=['intel/2020.4', 'intelmpi/2020.4', 'fftw/3.3.10'],
-                                export=['APPLES','ORANGES'],
-                                path_exe='/home/test/code',add_stop_array=True,add_automation='automation.py',
-                                add_lines_header=['test_HEADER', 'test_HEADER2'],
-                                add_lines_body=['test_BODY', 'test_BODY2'],
-                                **self.slurm_kwargs)
+        }
 
-        
+        self.js = JobSettings(filename='job_test.sh', array_size=2,
+                              modules=['intel/2020.4', 'intelmpi/2020.4', 'fftw/3.3.10'],
+                              export=['APPLES', 'ORANGES'],
+                              path_exe='/home/test/code', add_stop_array=True, add_automation='automation.py',
+                              add_lines_header=['test_HEADER', 'test_HEADER2'],
+                              add_lines_body=['test_BODY', 'test_BODY2'],
+                              **self.slurm_kwargs)
+
     def test_string(self):
         assert self.js.get_bash_script() == self.script_string
-        
+
     def test_from_file(self):
-        js_from_file = JobSettings.from_bash_file(self.test_files_path,'job_test.sh')
-        JobSettingsTest().assert_job_settings_equal(self.js,js_from_file)
-        
+        js_from_file = JobSettings.from_bash_file(self.test_files_path, 'job_test.sh')
+        JobSettingsTest().assert_job_settings_equal(self.js, js_from_file)
+
     def test_write_script(self):
         self.js.filename = 'temp.sh'
         self.js.write_bash_file(self.test_files_path)
         JobSettingsTest().assert_job_settings_equal(
-            self.js,JobSettings.from_bash_file(self.test_files_path,'temp.sh'))
+            self.js, JobSettings.from_bash_file(self.test_files_path, 'temp.sh'))
         os.remove(self.get_testfile_path('temp.sh'))
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            

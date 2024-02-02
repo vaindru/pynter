@@ -1,10 +1,10 @@
 computed_entry_default:
-- final_energy
-- structures
-- eigenvalue_band_properties
-- parameters
-- actual_kpoints
-- ionic_steps
+  - final_energy
+  - structures
+  - eigenvalue_band_properties
+  - parameters
+  - actual_kpoints
+  - ionic_steps
 default_potcar_symbols:
   Ac: Ac
   Ag: Ag

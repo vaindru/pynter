@@ -11,13 +11,15 @@ from pymatgen.core.sites import PeriodicSite
 from pymatgen.core.periodic_table import Element
 import os.path as op
 import os
-from pynter.tools.structure import is_site_in_structure, is_site_in_structure_coords, sort_sites_to_ref_coords, write_extxyz_file
-from pynter.defects.defects import Vacancy,Substitution,Interstitial,DefectComplex
+from pynter.tools.structure import is_site_in_structure, is_site_in_structure_coords, sort_sites_to_ref_coords, \
+    write_extxyz_file
+from pynter.defects.defects import Vacancy, Substitution, Interstitial, DefectComplex
 from pymatgen.core.trajectory import Trajectory
 
 """Interstitial generator to be re-implemented using the new pymatgen defects"""
-    
-def create_interstitial_structures(structure,elements,supercell_size=None,**kwargs):
+
+
+def create_interstitial_structures(structure, elements, supercell_size=None, **kwargs):
     """
     Create structures with interstitials based on Voronoi with pymatgen. 
 
@@ -48,18 +50,18 @@ def create_interstitial_structures(structure,elements,supercell_size=None,**kwar
     bulk_structure = structure.copy()
     if supercell_size:
         bulk_structure.make_supercell(supercell_size)
-    generator = VoronoiInterstitialGenerator().generate(bulk_structure,elements)
+    generator = VoronoiInterstitialGenerator().generate(bulk_structure, elements)
     interstitial_structures = {}
     for inter in generator:
         el = inter.site.specie.element.symbol
         if el not in interstitial_structures.keys():
             interstitial_structures[el] = []
         interstitial_structures[el].append(inter.defect_structure)
-            
-    return interstitial_structures
-    
 
-def create_substitution_structures(structure,replace,supercell_size=1):
+    return interstitial_structures
+
+
+def create_substitution_structures(structure, replace, supercell_size=1):
     """
     Create structures with substitutions starting from a bulk structure (unit cell or supercell).
 
@@ -79,9 +81,9 @@ def create_substitution_structures(structure,replace,supercell_size=1):
         Dictionary with substitution types as keys and structures as values.
     """
     from pynter.defects.pmg.pmg_defects_core import Substitution
-    sub_structures={}
+    sub_structures = {}
     bulk_structure = structure.copy()
-    
+
     for el_to_sub in replace:
         for el in bulk_structure.composition.elements:
             s = bulk_structure.copy()
@@ -90,15 +92,15 @@ def create_substitution_structures(structure,replace,supercell_size=1):
                     if site.specie == el:
                         sub_site = site
                         sub_el = replace[el.symbol]
-                        defect_site = PeriodicSite(sub_el,sub_site.frac_coords,sub_site.lattice)
-                        structure = Substitution(s,defect_site).generate_defect_structure(supercell_size)
+                        defect_site = PeriodicSite(sub_el, sub_site.frac_coords, sub_site.lattice)
+                        structure = Substitution(s, defect_site).generate_defect_structure(supercell_size)
                         sub_structures[f'{sub_el}-on-{el.symbol}'] = structure
                         break
 
     return sub_structures
 
 
-def create_vacancy_structures(structure,elements=None,supercell_size=None):
+def create_vacancy_structures(structure, elements=None, supercell_size=None):
     """
     Create structures with vacancies starting from a bulk structure (unit cell or supercell).
 
@@ -119,13 +121,13 @@ def create_vacancy_structures(structure,elements=None,supercell_size=None):
         Dictionary with vacancy types as keys and structures as values.
 
     """
-    vac_structures={}
+    vac_structures = {}
     bulk_structure = structure.copy()
     if supercell_size:
         bulk_structure.make_supercell(supercell_size)
     if not elements:
         elements = [el.symbol for el in bulk_structure.composition.elements]
-    
+
     for el in bulk_structure.composition.elements:
         s = bulk_structure.copy()
         for site in s.sites:
@@ -137,8 +139,9 @@ def create_vacancy_structures(structure,elements=None,supercell_size=None):
 
     return vac_structures
 
- 
-def create_def_structure_for_visualization(structure_defect,structure_bulk,defects=None,sort_to_bulk=False,tol=1e-03):
+
+def create_def_structure_for_visualization(structure_defect, structure_bulk, defects=None, sort_to_bulk=False,
+                                           tol=1e-03):
     """
     Create defect structure for visualization in OVITO. The vacancies are shown by inserting 
     in the vacant site the element of same row and next group on the periodic table.
@@ -170,37 +173,37 @@ def create_def_structure_for_visualization(structure_defect,structure_bulk,defec
     """
     df = structure_defect.copy()
     bk = structure_bulk.copy()
-    extra_sites=[]
+    extra_sites = []
     if defects:
         dfs = defects
     else:
-        df_found = defect_finder(df,bk,tol=tol)
-        if df_found.defect_type=='DefectComplex':
+        df_found = defect_finder(df, bk, tol=tol)
+        if df_found.defect_type == 'DefectComplex':
             dfs = df_found.defects
         else:
             dfs = [df_found]
-   
+
     for d in dfs:
         dsite = d.site
         dtype = d.defect_type
         if dtype == 'Vacancy':
-            check,i = is_site_in_structure_coords(dsite,bk,tol=tol)
+            check, i = is_site_in_structure_coords(dsite, bk, tol=tol)
             el = dsite.specie
-            species = Element.from_row_and_group(el.row, el.group+1)
-            df.insert(i=i,species=species,coords=dsite.frac_coords)
+            species = Element.from_row_and_group(el.row, el.group + 1)
+            df.insert(i=i, species=species, coords=dsite.frac_coords)
         elif dtype == 'Interstitial' and sort_to_bulk:
             extra_sites.append(dsite)
 
     # reorder to match bulk, useful if you don't have the non-relaxed defect structure
     if sort_to_bulk:
-        new_structure = sort_sites_to_ref_coords(df, bk, extra_sites,tol=tol)
+        new_structure = sort_sites_to_ref_coords(df, bk, extra_sites, tol=tol)
     # In this case only dummy atoms are inserted, no further changes
     else:
         new_structure = df.copy()
-    return new_structure        
+    return new_structure
 
-        
-def defect_finder(structure_defect,structure_bulk,tol=1e-03):
+
+def defect_finder(structure_defect, structure_bulk, tol=1e-03):
     """
     Function to find defect comparing defect and bulk structure (Pymatgen objects). 
 
@@ -220,33 +223,32 @@ def defect_finder(structure_defect,structure_bulk,tol=1e-03):
     df = structure_defect
     bk = structure_bulk
     defects = []
-    
+
     for s in df:
-        is_site,index = is_site_in_structure_coords(s,bk,tol=tol)
+        is_site, index = is_site_in_structure_coords(s, bk, tol=tol)
         if is_site:
-            if is_site_in_structure(s,bk,tol=tol)[0] == False:
-                defect = Substitution(s, bk,site_in_bulk=bk[index])
+            if is_site_in_structure(s, bk, tol=tol)[0] == False:
+                defect = Substitution(s, bk, site_in_bulk=bk[index])
                 defects.append(defect)
         else:
             defect = Interstitial(s, bk)
             defects.append(defect)
-            
+
     for s in bk:
-        if is_site_in_structure_coords(s,df,tol=tol)[0] == False:
+        if is_site_in_structure_coords(s, df, tol=tol)[0] == False:
             defect = Vacancy(s, bk)
             defects.append(defect)
-    
+
     if len(defects) > 1:
         return DefectComplex(defects, structure_bulk)
     elif len(defects) == 1:
         return defects[0]
     else:
-        warnings.warn('No defect has been found. Try to adjust the tolerance parameter.',UserWarning)
+        warnings.warn('No defect has been found. Try to adjust the tolerance parameter.', UserWarning)
         return defects
 
 
-
-def get_trajectory_for_visualization(structure_defect,structure_bulk,defects=None,tol=1e-03,file=None):
+def get_trajectory_for_visualization(structure_defect, structure_bulk, defects=None, tol=1e-03, file=None):
     """
     Create trajectory from defect and bulk structures for visualization in OVITO. 
     The vacancies are shown by inserting in the vacant site the element of same row and next group on the periodic table.
@@ -274,16 +276,17 @@ def get_trajectory_for_visualization(structure_defect,structure_bulk,defects=Non
 
     """
     sb = structure_bulk
-    dummy = create_def_structure_for_visualization(structure_defect, structure_bulk,defects,sort_to_bulk=True,tol=tol)
-    traj = Trajectory.from_structures([dummy,sb],constant_lattice=True)     
+    dummy = create_def_structure_for_visualization(structure_defect, structure_bulk, defects, sort_to_bulk=True,
+                                                   tol=tol)
+    traj = Trajectory.from_structures([dummy, sb], constant_lattice=True)
     if file:
         if not op.exists(op.dirname(file)):
             os.makedirs(op.dirname(file))
         traj.write_Xdatcar(file)
     return traj
-        
-        
-def write_extxyz_for_visualization(file,structure_defect,structure_bulk,defects=None,tol=1e-03): 
+
+
+def write_extxyz_for_visualization(file, structure_defect, structure_bulk, defects=None, tol=1e-03):
     """
     Write extxyz file for visualization in OVITO. The displacements w.r.t the bulk structure are included.
     The vacancies are shown by inserting in the vacant site the element of same row and next group on the periodic table.
@@ -305,6 +308,7 @@ def write_extxyz_for_visualization(file,structure_defect,structure_bulk,defects=
         The default is 1e-03.
     """
     sb = structure_bulk
-    dummy = create_def_structure_for_visualization(structure_defect, structure_bulk,defects,sort_to_bulk=True,tol=tol)
-    write_extxyz_file(file, dummy, sb,displacements=True)
+    dummy = create_def_structure_for_visualization(structure_defect, structure_bulk, defects, sort_to_bulk=True,
+                                                   tol=tol)
+    write_extxyz_file(file, dummy, sb, displacements=True)
     return

@@ -56,12 +56,12 @@ class FreysoldtCorrection(DefectCorrection):
     """
 
     def __init__(
-        self,
-        dielectric_const,
-        q_model=None,
-        energy_cutoff=520,
-        madetol=0.0001,
-        axis=None,
+            self,
+            dielectric_const,
+            q_model=None,
+            energy_cutoff=520,
+            madetol=0.0001,
+            axis=None,
     ):
         """
         Initializes the FreysoldtCorrection class
@@ -144,7 +144,7 @@ class FreysoldtCorrection(DefectCorrection):
         pot_corr_tracker = []
 
         for x, pureavg, defavg, axis in zip(
-            list_axis_grid, list_bulk_plnr_avg_esp, list_defect_plnr_avg_esp, list_axes
+                list_axis_grid, list_bulk_plnr_avg_esp, list_defect_plnr_avg_esp, list_axes
         ):
             tmp_pot_corr = self.perform_pot_corr(
                 x,
@@ -211,15 +211,15 @@ class FreysoldtCorrection(DefectCorrection):
         return es_corr
 
     def perform_pot_corr(
-        self,
-        axis_grid,
-        pureavg,
-        defavg,
-        lattice,
-        q,
-        defect_frac_position,
-        axis,
-        widthsample=1.0,
+            self,
+            axis_grid,
+            pureavg,
+            defavg,
+            lattice,
+            q,
+            defect_frac_position,
+            axis,
+            widthsample=1.0,
     ):
         """
         For performing planar averaging potential alignment
@@ -518,10 +518,10 @@ class KumagaiCorrection(DefectCorrection):
         real_summation = real_summation[0]
 
         es_corr = (
-            recip_summation
-            + real_summation
-            + self.get_potential_shift(gamma, volume)
-            + self.get_self_interaction(gamma)
+                recip_summation
+                + real_summation
+                + self.get_potential_shift(gamma, volume)
+                + self.get_self_interaction(gamma)
         )
 
         es_corr *= -(charge ** 2.0) * kumagai_to_V / 2.0  # [eV]
@@ -529,15 +529,15 @@ class KumagaiCorrection(DefectCorrection):
         return es_corr
 
     def perform_pot_corr(
-        self,
-        defect_structure,
-        defect_frac_coords,
-        site_list,
-        sampling_radius,
-        q,
-        r_vecs,
-        g_vecs,
-        gamma,
+            self,
+            defect_structure,
+            defect_frac_coords,
+            site_list,
+            sampling_radius,
+            q,
+            r_vecs,
+            g_vecs,
+            gamma,
     ):
         """
         For performing potential alignment in manner described by Kumagai et al.
@@ -859,10 +859,10 @@ class BandFillingCorrection(DefectCorrection):
                         bf_corr += weight * spinfctr * occu * (eig - shifted_cbm)  # "move the electrons down"
                         self.metadata["num_elec_cbm"] += weight * spinfctr * occu
                     elif (occu != core_occupation_value) and (
-                        eig <= shifted_vbm + self.resolution
+                            eig <= shifted_vbm + self.resolution
                     ):  # acceptor MB correction
                         bf_corr += (
-                            weight * spinfctr * (core_occupation_value - occu) * (shifted_vbm - eig)
+                                weight * spinfctr * (core_occupation_value - occu) * (shifted_vbm - eig)
                         )  # "move the holes up"
                         self.metadata["num_hole_vbm"] += weight * spinfctr * (core_occupation_value - occu)
 

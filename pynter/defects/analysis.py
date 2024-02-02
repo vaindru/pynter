@@ -1,4 +1,3 @@
-
 import numpy as np
 from scipy.optimize import bisect
 import matplotlib
@@ -15,7 +14,7 @@ from pynter.tools.utils import get_object_feature, select_objects, sort_objects
 
 
 class DefectsAnalysis:
-    
+
     def __init__(self, entries, vbm, band_gap, sort_entries=True, occupation_function='MB'):
         """ 
         Class to compute defect properties starting from single calculations of defects.
@@ -36,23 +35,22 @@ class DefectsAnalysis:
                 Function to compute defect occupation. 
                 "FD" for Fermi-Dirac, "MB" for Maxwell-Boltzmann.
         """
-        self.entries = self.sort_entries(inplace=False,entries=entries) if sort_entries else entries
+        self.entries = self.sort_entries(inplace=False, entries=entries) if sort_entries else entries
         self.vbm = vbm
         self.band_gap = band_gap
         self.occupation_function = occupation_function
         self.groups = self._group_entries()
         self.names = list(self.groups.keys())
-        
 
-    def __str__(self):     
+    def __str__(self):
         return self.get_dataframe().__str__()
-            
+
     def __repr__(self):
         return self.__str__()
-    
+
     def __iter__(self):
         return self.entries.__iter__()
-    
+
     def _group_entries(self):
         groups = {}
         for e in self.entries:
@@ -61,25 +59,23 @@ class DefectsAnalysis:
             else:
                 groups[e.name].append(e)
         return groups
-            
-    
+
     def as_dict(self):
         """
         Returns:
             Json-serializable dict representation of DefectsAnalysis
         """
         d = {
-        "@module": self.__class__.__module__,
-        "@class": self.__class__.__name__,
-        "entries": [entry.as_dict() for entry in self.entries],
-        "vbm":self.vbm,
-        "band_gap":self.band_gap
-            }
+            "@module": self.__class__.__module__,
+            "@class": self.__class__.__name__,
+            "entries": [entry.as_dict() for entry in self.entries],
+            "vbm": self.vbm,
+            "band_gap": self.band_gap
+        }
         return d
 
-
     @classmethod
-    def from_dict(cls,d):
+    def from_dict(cls, d):
         """
         Reconstitute a DefectsAnalysis object from a dict representation created using
         as_dict().
@@ -90,12 +86,11 @@ class DefectsAnalysis:
         Returns:
             DefectsAnalysis object
         """
-        entries = [MontyDecoder().process_decoded(entry_dict) for entry_dict in d['entries']]        
+        entries = [MontyDecoder().process_decoded(entry_dict) for entry_dict in d['entries']]
         vbm = d['vbm']
         band_gap = d['band_gap']
-        return cls(entries,vbm,band_gap)
-    
-    
+        return cls(entries, vbm, band_gap)
+
     @staticmethod
     def from_json(path_or_string):
         """
@@ -119,7 +114,6 @@ class DefectsAnalysis:
             d = json.loads(path_or_string)
         return DefectsAnalysis.from_dict(d)
 
-
     @property
     def elements(self):
         """
@@ -133,8 +127,7 @@ class DefectsAnalysis:
                     elements.append(el)
         return elements
 
-
-    def to_json(self,path='',**kwargs):
+    def to_json(self, path='', **kwargs):
         """
         Save DefectsAnalysis object as json string or file.
         Parameters
@@ -149,16 +142,15 @@ class DefectsAnalysis:
         """
         d = self.as_dict(**kwargs)
         if path == '':
-            path = op.join(self.path,self.name+'.json')
+            path = op.join(self.path, self.name + '.json')
         if path:
-            with open(path,'w') as file:
-                json.dump(d,file)
+            with open(path, 'w') as file:
+                json.dump(d, file)
             return
         else:
-            return d.__str__() 
-        
+            return d.__str__()
 
-    def binding_energy(self,name,fermi_level=0):
+    def binding_energy(self, name, fermi_level=0):
         """
         Args:
             name (string): name of defect complex as assigned in defect entry object
@@ -166,20 +158,19 @@ class DefectsAnalysis:
         Returns:
             binding_energy (float)
         """
-        stable_charges = self.stable_charges(None,fermi_level)
+        stable_charges = self.stable_charges(None, fermi_level)
         charge = stable_charges[name][0]
         binding_energy = stable_charges[name][1]
-        entry = self.select_entries(names=[name],charge=charge)[0]
-        for sd in entry.defect.defects: #subtract energies of single defects
+        entry = self.select_entries(names=[name], charge=charge)[0]
+        for sd in entry.defect.defects:  # subtract energies of single defects
             dtype = sd.defect_type
             dspecie = sd.name.dspecie
-            dname = self.select_entries(types=[dtype],defect_specie=dspecie)[0].name
-            binding_energy = binding_energy - stable_charges[dname][1]    
-        
+            dname = self.select_entries(types=[dtype], defect_specie=dspecie)[0].name
+            binding_energy = binding_energy - stable_charges[dname][1]
+
         return binding_energy
 
-
-    def carrier_concentrations(self,bulk_dos,temperature=300,fermi_level=0.):
+    def carrier_concentrations(self, bulk_dos, temperature=300, fermi_level=0.):
         """
         Get intrinsic carrier concentrations by integrating over the density of states
         given a fixed Fermi level
@@ -191,16 +182,15 @@ class DefectsAnalysis:
         Returns:
             h,n in absolute values
         """
-        
+
         fdos = FermiDosCarriersInfo(bulk_dos, bandgap=self.band_gap)
-        _,fdos_vbm = fdos.get_cbm_vbm()    
-        
-        h, n = fdos.get_doping(fermi_level=fermi_level + fdos_vbm, temperature=temperature,carriers_values=True)
-        
-        return abs(h) , abs(n)
+        _, fdos_vbm = fdos.get_cbm_vbm()
 
+        h, n = fdos.get_doping(fermi_level=fermi_level + fdos_vbm, temperature=temperature, carriers_values=True)
 
-    def charge_transition_levels(self, energy_range=None,entries=None,get_integers=True):
+        return abs(h), abs(n)
+
+    def charge_transition_levels(self, energy_range=None, entries=None, get_integers=True):
         """
         Computes charge transition levels for all defect entries
         Args:
@@ -213,20 +203,20 @@ class DefectsAnalysis:
         Returns:
             Dictionary with defect name and list of tuples for charge transition levels:
                 {name:[(q1,q2,ctl),(q2,q3,ctl),...}
-        """                
+        """
         entries = entries if entries else self.entries
         if energy_range == None:
-            energy_range = (-0.5,self.band_gap +0.5) 
-        # creating energy array
+            energy_range = (-0.5, self.band_gap + 0.5)
+            # creating energy array
         npoints = 3000
-        step = abs(energy_range[1]-energy_range[0])/npoints
-        e = np.arange(energy_range[0],energy_range[1],step)
-        
+        step = abs(energy_range[1] - energy_range[0]) / npoints
+        e = np.arange(energy_range[0], energy_range[1], step)
+
         charge_transition_levels = {}
         # starting point is first E value
-        previous_stable_charges = self.stable_charges(None,fermi_level=energy_range[0],entries=entries)
-        for i in range(0,len(e)):
-            stable_charges = self.stable_charges(None, fermi_level = e[i],entries=entries)
+        previous_stable_charges = self.stable_charges(None, fermi_level=energy_range[0], entries=entries)
+        for i in range(0, len(e)):
+            stable_charges = self.stable_charges(None, fermi_level=e[i], entries=entries)
             for name in stable_charges:
                 new_charge = stable_charges[name][0]
                 previous_charge = previous_stable_charges[name][0]
@@ -237,13 +227,12 @@ class DefectsAnalysis:
                     if get_integers:
                         previous_charge = int(previous_charge)
                         new_charge = int(new_charge)
-                    charge_transition_levels[name].append((previous_charge,new_charge,e[i]))
-                            
-        return charge_transition_levels        
-    
+                    charge_transition_levels[name].append((previous_charge, new_charge, e[i]))
+
+        return charge_transition_levels
 
     def defect_concentrations(self, chemical_potentials, temperature=300, fermi_level=0.,
-                              fixed_concentrations=None,per_unit_volume=True):
+                              fixed_concentrations=None, per_unit_volume=True):
         """
         Give list of all concentrations at specified efermi.
         If fixed_concentrations is provided the concentration of defect entries are 
@@ -272,55 +261,54 @@ class DefectsAnalysis:
         """
         concentrations = []
         if fixed_concentrations:
-            dc = self.defect_concentrations(chemical_potentials,temperature,fermi_level,
-                                            fixed_concentrations=None,per_unit_volume=per_unit_volume)
-            frozen = fixed_concentrations 
+            dc = self.defect_concentrations(chemical_potentials, temperature, fermi_level,
+                                            fixed_concentrations=None, per_unit_volume=per_unit_volume)
+            frozen = fixed_concentrations
 
         for e in self.entries:
             nsites = e.defect.site_concentration_in_cm3 if per_unit_volume else e.multiplicity
             # frozen defects approach
             if fixed_concentrations:
-                c = e.defect_concentration(self.vbm, chemical_potentials,temperature,fermi_level,per_unit_volume,self.occupation_function)
-                corr = self._get_frozen_correction(e,frozen,dc)
+                c = e.defect_concentration(self.vbm, chemical_potentials, temperature, fermi_level, per_unit_volume,
+                                           self.occupation_function)
+                corr = self._get_frozen_correction(e, frozen, dc)
                 c = c * corr
-                defconc = SingleDefConc(name=e.name,charge=e.charge,conc=c,stable=bool(c<=nsites))
-                concentrations.append(defconc)     
-            
-            else:
-                c = e.defect_concentration(self.vbm, chemical_potentials,temperature,fermi_level,per_unit_volume,self.occupation_function)
-                defconc = SingleDefConc(name=e.name,charge=e.charge,conc=c,stable=bool(c<=nsites))
+                defconc = SingleDefConc(name=e.name, charge=e.charge, conc=c, stable=bool(c <= nsites))
                 concentrations.append(defconc)
-            
+
+            else:
+                c = e.defect_concentration(self.vbm, chemical_potentials, temperature, fermi_level, per_unit_volume,
+                                           self.occupation_function)
+                defconc = SingleDefConc(name=e.name, charge=e.charge, conc=c, stable=bool(c <= nsites))
+                concentrations.append(defconc)
 
         return DefectConcentrations(concentrations)
 
-
-    def _get_frozen_correction(self,e,frozen,dc):
+    def _get_frozen_correction(self, e, frozen, dc):
         corr = 1
         for dn in e.name:
             typ, specie, name = dn.dtype, dn.dspecie, dn.name
             if typ == 'Vacancy':
                 k = name
                 if k in frozen.keys():
-                    eltot = dc.get_element_total(specie,vacancy=True)
-                    corr = corr * (frozen[k]/eltot)
+                    eltot = dc.get_element_total(specie, vacancy=True)
+                    corr = corr * (frozen[k] / eltot)
             else:
                 if name in frozen.keys():
                     dtot = 0
-                    for n,c in dc.total.items(): # sum over all defects containing the specific specie
+                    for n, c in dc.total.items():  # sum over all defects containing the specific specie
                         if name in n:
                             dtot += c
-                    corr = corr * (frozen[name]/dtot) 
+                    corr = corr * (frozen[name] / dtot)
                 else:
                     k = specie
                     if k in frozen.keys():
-                        eltot = dc.get_element_total(specie,vacancy=False)
-                        corr = corr * (frozen[k]/eltot)
+                        eltot = dc.get_element_total(specie, vacancy=False)
+                        corr = corr * (frozen[k] / eltot)
         return corr
 
-    
-    def filter_entries(self,inplace=False,entries=None,mode='and',exclude=False,types=None,
-                       elements=None,names=None,function=None,**kwargs):
+    def filter_entries(self, inplace=False, entries=None, mode='and', exclude=False, types=None,
+                       elements=None, names=None, function=None, **kwargs):
         """
         Filter entries based on different criteria. Return another DefectsAnalysis object.
 
@@ -353,17 +341,16 @@ class DefectsAnalysis:
         -------
         DefectsAnalysis object.
         """
-        output_entries = self.select_entries(entries=entries,mode=mode,exclude=exclude,types=types,
-                                             elements=elements,names=names,function=function,**kwargs)
-        
+        output_entries = self.select_entries(entries=entries, mode=mode, exclude=exclude, types=types,
+                                             elements=elements, names=names, function=function, **kwargs)
+
         if inplace:
             self.entries = output_entries
             return
         else:
             return DefectsAnalysis(output_entries, self.vbm, self.band_gap)
 
-
-    def formation_energies(self,chemical_potentials,fermi_level=0,entries=None):
+    def formation_energies(self, chemical_potentials, fermi_level=0, entries=None):
         """
         Creating a dictionary with names of single defect entry as keys and
         a list of tuples (charge,formation_energy) as values
@@ -384,17 +371,16 @@ class DefectsAnalysis:
         for entry in entries:
             name = entry.name
             charge = entry.charge
-            eform = entry.formation_energy(self.vbm,chemical_potentials,fermi_level=fermi_level)
+            eform = entry.formation_energy(self.vbm, chemical_potentials, fermi_level=fermi_level)
             if name in formation_energies:
-                formation_energies[name].append((charge,eform))
+                formation_energies[name].append((charge, eform))
             else:
                 formation_energies[name] = []
-                formation_energies[name].append((charge,eform))
-        
+                formation_energies[name].append((charge, eform))
+
         return formation_energies
-        
-           
-    def get_charge_transition_level(self,name,q1,q2):
+
+    def get_charge_transition_level(self, name, q1, q2):
         """
         Args:
             chemical_potentials: 
@@ -406,18 +392,17 @@ class DefectsAnalysis:
         """
         chemical_potentials = None
         formation_energies = self.formation_energies(chemical_potentials)
-        
+
         for d in formation_energies[name]:
             if d[0] == q1:
                 E1 = d[1]
             if d[0] == q2:
                 E2 = d[1]
-        charge_transition_level = -1*(E1 - E2)/(q1 - q2)
-        
-        return charge_transition_level
-        
+        charge_transition_level = -1 * (E1 - E2) / (q1 - q2)
 
-    def get_dataframe(self,entries=None,pretty=False,include_bulk=False,display=[]):
+        return charge_transition_level
+
+    def get_dataframe(self, entries=None, pretty=False, include_bulk=False, display=[]):
         """
         Get DataFrame to display entries. 
 
@@ -453,29 +438,28 @@ class DefectsAnalysis:
                 d['bulk composition'] = e.bulk_structure.composition.formula
                 d['bulk space group'] = e.bulk_structure.get_space_group_info()
             if not pretty:
-                d['symbol'] = symbol    
+                d['symbol'] = symbol
                 d['delta atoms'] = e.delta_atoms
             d['charge'] = e.charge
             d['multiplicity'] = e.multiplicity
             if display:
                 for feature in display:
-                    if isinstance(feature,list):
+                    if isinstance(feature, list):
                         key = feature[0]
                         for k in feature[1:]:
-                            key = key + '["%s"]'%k
+                            key = key + '["%s"]' % k
                     else:
                         key = feature
-                    d[key] = get_object_feature(e,feature)
+                    d[key] = get_object_feature(e, feature)
             table.append(d)
-        df = pd.DataFrame(table,index=index)
+        df = pd.DataFrame(table, index=index)
         if pretty:
             df.index.name = 'symbol'
         else:
             df.index.name = 'name'
         return df
-    
 
-    def merge_entries(self,*args):
+    def merge_entries(self, *args):
         """
         Create a new DefectsAnalysis object merging the defect entries of other objects.
         The VBM and band gap of all objects need to match for consistency.
@@ -484,16 +468,15 @@ class DefectsAnalysis:
         for da in args:
             current_index = args.index(da)
             if current_index != 0:
-                previous_da = args[current_index-1]
+                previous_da = args[current_index - 1]
                 if da.vbm != previous_da.vbm and da.band_gap != previous_da.band_gap:
                     raise ValueError('Cannot merge entries, band gap and VBM are different')
             new_entries = new_entries + da.entries
         return DefectsAnalysis(new_entries, self.vbm, self.band_gap)
-        
-              
-    def plot(self,chemical_potentials,entries=None,xlim=None,ylim=None,title=None,
-             fermi_level=None,plotsize=1,fontsize=1.2,show_legend=True,
-             format_legend=True,get_subplot=False,subplot_settings=None):
+
+    def plot(self, chemical_potentials, entries=None, xlim=None, ylim=None, title=None,
+             fermi_level=None, plotsize=1, fontsize=1.2, show_legend=True,
+             format_legend=True, get_subplot=False, subplot_settings=None):
         """
         Produce defect Formation energy vs Fermi energy plot
         Args:
@@ -525,28 +508,28 @@ class DefectsAnalysis:
             matplotlib object
         """
         entries = entries if entries else self.entries
-        matplotlib.rcParams.update({'font.size': 10*fontsize})        
-        formation_energies = self.formation_energies(chemical_potentials,fermi_level=0,entries=entries)
+        matplotlib.rcParams.update({'font.size': 10 * fontsize})
+        formation_energies = self.formation_energies(chemical_potentials, fermi_level=0, entries=entries)
         if xlim == None:
-            xlim = (-0.5,self.band_gap+0.5)        
+            xlim = (-0.5, self.band_gap + 0.5)
         npoints = 200
-        step = abs(xlim[1]+0.1-xlim[0])/npoints
-        x = np.arange(xlim[0],xlim[1]+0.1,step)
+        step = abs(xlim[1] + 0.1 - xlim[0]) / npoints
+        x = np.arange(xlim[0], xlim[1] + 0.1, step)
         try:
-            if len(plotsize)==2:
+            if len(plotsize) == 2:
                 pass
         except:
-            plotsize = (plotsize,plotsize)
-        
+            plotsize = (plotsize, plotsize)
+
         if get_subplot:
             if subplot_settings[2] == 1:
-                plt.figure(figsize=(8*plotsize[0],6*plotsize[1]))               
-            plt.subplot(subplot_settings[0],subplot_settings[1],subplot_settings[2])
+                plt.figure(figsize=(8 * plotsize[0], 6 * plotsize[1]))
+            plt.subplot(subplot_settings[0], subplot_settings[1], subplot_settings[2])
             plt.grid()
         else:
-            plt.figure(figsize=(8*plotsize[0],6*plotsize[1]))
+            plt.figure(figsize=(8 * plotsize[0], 6 * plotsize[1]))
             plt.grid()
-            
+
         for name in formation_energies:
             energy = np.zeros(len(x))
             emin = np.zeros(len(x))
@@ -554,12 +537,12 @@ class DefectsAnalysis:
             y_star = []
             q_previous = None
             # this is faster than using self.stable_charges
-            for i in range(0,npoints):
+            for i in range(0, npoints):
                 emin[i] = 1e40
                 for d in formation_energies[name]:
                     q = d[0]
                     e0 = d[1]
-                    energy[i] = e0 + q*x[i]
+                    energy[i] = e0 + q * x[i]
                     # finding most stable charge state
                     if energy[i] < emin[i]:
                         emin[i] = energy[i]
@@ -569,40 +552,39 @@ class DefectsAnalysis:
                     if q_previous != None:
                         x_star.append(x[i])
                         y_star.append(emin[i])
-                    q_previous = q_stable       
+                    q_previous = q_stable
 
             if format_legend:
                 label_txt = name.symbol
             else:
-                label_txt = name            
+                label_txt = name
 
-            plt.plot(x,emin,label=label_txt,linewidth=3)
-            plt.scatter(x_star,y_star,s=120,marker='*')
-                        
+            plt.plot(x, emin, label=label_txt, linewidth=3)
+            plt.scatter(x_star, y_star, s=120, marker='*')
+
         plt.axvline(x=0.0, linestyle='-', color='k', linewidth=2)  # black dashed lines for gap edges
         plt.axvline(x=self.band_gap, linestyle='-', color='k',
-                    linewidth=2)        
+                    linewidth=2)
         if fermi_level:
-            plt.axvline(x=fermi_level, linestyle='dashed', color='k', linewidth=1.5, label='$\mu _{e}$')                
-        # shaded areas
+            plt.axvline(x=fermi_level, linestyle='dashed', color='k', linewidth=1.5, label='$\mu _{e}$')
+            # shaded areas
         plt.axvspan(xlim[0], 0, facecolor='k', alpha=0.2)
-        plt.axvspan(self.band_gap, xlim[1]+0.1, facecolor='k', alpha=0.2)
-        plt.hlines(0,xlim[0],xlim[1]+0.1,colors='k',linestyles='dashed',alpha=0.5)
+        plt.axvspan(self.band_gap, xlim[1] + 0.1, facecolor='k', alpha=0.2)
+        plt.hlines(0, xlim[0], xlim[1] + 0.1, colors='k', linestyles='dashed', alpha=0.5)
         plt.xlim(xlim)
-        if ylim: 
-            plt.ylim(ylim) 
+        if ylim:
+            plt.ylim(ylim)
         plt.xlabel('Fermi level (eV)')
         plt.ylabel('Formation energy (eV)')
         if title:
             plt.title(title)
-        if show_legend:    
+        if show_legend:
             plt.legend()
-     #   plt.grid()
+        #   plt.grid()
 
         return plt
-     
-        
-    def plot_binding_energies(self, names=None, xlim=None, ylim=None, size=1,format_legend=True):
+
+    def plot_binding_energies(self, names=None, xlim=None, ylim=None, size=1, format_legend=True):
         """
         Plot binding energies for complex of defects as a function of the fermi level
         Args:
@@ -619,45 +601,44 @@ class DefectsAnalysis:
                 Bool for getting latex-like legend based on the name of defect entries
         Returns:
             matplotlib object
-        """        
-        plt.figure(figsize=(8*size,6*size))
-        matplotlib.rcParams.update({'font.size': 10*1.8*size}) 
-        if xlim==None:
-            xlim = (-0.5,self.band_gap+0.5)
+        """
+        plt.figure(figsize=(8 * size, 6 * size))
+        matplotlib.rcParams.update({'font.size': 10 * 1.8 * size})
+        if xlim == None:
+            xlim = (-0.5, self.band_gap + 0.5)
         # building array for x values (fermi level)    
-        ef = np.arange(xlim[0],xlim[1]+0.1,(xlim[1]-xlim[0])/200)        
-        binding_energy = np.zeros(len(ef))        
+        ef = np.arange(xlim[0], xlim[1] + 0.1, (xlim[1] - xlim[0]) / 200)
+        binding_energy = np.zeros(len(ef))
         if not names:
             names = []
             for e in self.entries:
                 if e.defect_type == 'DefectComplex':
                     if e.name not in names:
-                        names.append(e.name)        
-        # getting binding energy at different fermi levels for every name in list
+                        names.append(e.name)
+                        # getting binding energy at different fermi levels for every name in list
         for name in names:
             label = self.select_entries(names=[name])[0].symbol if format_legend else name
-            for i in range(0,len(ef)):
-                binding_energy[i] = self.binding_energy(name,fermi_level=ef[i])            
-            plt.plot(ef,binding_energy, linewidth=2.5*size,label=label)
-            
+            for i in range(0, len(ef)):
+                binding_energy[i] = self.binding_energy(name, fermi_level=ef[i])
+            plt.plot(ef, binding_energy, linewidth=2.5 * size, label=label)
+
         plt.axvline(x=0.0, linestyle='-', color='k', linewidth=2)  # black lines for gap edges
         plt.axvline(x=self.band_gap, linestyle='-', color='k',
-                    linewidth=2)        
+                    linewidth=2)
         # shaded areas
         plt.axvspan(xlim[0], 0, facecolor='k', alpha=0.2)
         plt.axvspan(self.band_gap, xlim[1], facecolor='k', alpha=0.2)
-        plt.hlines(0,xlim[0],xlim[1],colors='k',linestyles='dashed',alpha=0.5)
+        plt.hlines(0, xlim[0], xlim[1], colors='k', linestyles='dashed', alpha=0.5)
         plt.legend()
         plt.xlim(xlim)
-        if ylim: 
-            plt.ylim(ylim) 
+        if ylim:
+            plt.ylim(ylim)
         plt.xlabel('Fermi level (eV)')
         plt.ylabel('Binding energy (eV)')
-        
+
         return plt
-    
-    
-    def plot_ctl(self, entries=None,ylim=None, size=1, fermi_level=None, format_legend=True,get_integers=True):
+
+    def plot_ctl(self, entries=None, ylim=None, size=1, fermi_level=None, format_legend=True, get_integers=True):
         """
         Plotter for the charge transition levels
         Args:
@@ -669,62 +650,62 @@ class DefectsAnalysis:
             get_integers (bool): Get CTLs as integers.
         Returns:
             matplotlib object    
-        """        
-        plt.figure(figsize=(10*size,10*size))         
+        """
+        plt.figure(figsize=(10 * size, 10 * size))
         if ylim == None:
-            ylim = (-0.5,self.band_gap +0.5)        
-        charge_transition_levels = self.charge_transition_levels(entries=entries,get_integers=get_integers)
-        number_defects = len(charge_transition_levels)   
+            ylim = (-0.5, self.band_gap + 0.5)
+        charge_transition_levels = self.charge_transition_levels(entries=entries, get_integers=get_integers)
+        number_defects = len(charge_transition_levels)
         x_max = 10
-        interval = x_max/(number_defects + 1)
-        x = np.arange(0,x_max,interval)
+        interval = x_max / (number_defects + 1)
+        x = np.arange(0, x_max, interval)
         # position of x labels
         x_ticks_positions = []
-        for i in range(0,len(x)-1):
-            x_ticks_positions.append((x[i+1]-x[i])/2 + x[i])            
+        for i in range(0, len(x) - 1):
+            x_ticks_positions.append((x[i + 1] - x[i]) / 2 + x[i])
         x_ticks_labels = []
         for name in charge_transition_levels:
-            x_ticks_labels.append(name)        
-        # draw vertical lines to separte defect types
+            x_ticks_labels.append(name)
+            # draw vertical lines to separte defect types
         for i in x:
             plt.axvline(x=i, linestyle='-', color='k', linewidth=1.2, alpha=1, zorder=1)
-        xlim = (x[0],x[-1])        
-        #VBM and CBM shaded
+        xlim = (x[0], x[-1])
+        # VBM and CBM shaded
         plt.axhspan(ylim[0], 0, facecolor='grey', alpha=0.9, zorder=2)
-        plt.axhspan(self.band_gap,ylim[1], facecolor = 'grey', alpha=0.9, zorder=2)                
+        plt.axhspan(self.band_gap, ylim[1], facecolor='grey', alpha=0.9, zorder=2)
         # plot CTL
-        for i in range(0,len(x_ticks_labels)):
+        for i in range(0, len(x_ticks_labels)):
             name = x_ticks_labels[i]
             for ctl in charge_transition_levels[name]:
                 energy = ctl[2]
-                plt.hlines(energy,x[i],x[i+1],colors='k',linewidth=2.25, zorder=3)
+                plt.hlines(energy, x[i], x[i + 1], colors='k', linewidth=2.25, zorder=3)
                 charge1 = '+' + str(ctl[1]) if ctl[1] > 0 else str(ctl[1])
                 charge2 = '+' + str(ctl[0]) if ctl[0] > 0 else str(ctl[0])
                 label_charge = '(' + charge2 + '/' + charge1 + ')'
-                font_space = abs(ylim[1]-ylim[0]) / 100
+                font_space = abs(ylim[1] - ylim[0]) / 100
                 if energy < ylim[1] and energy > ylim[0]:
-                    plt.text(x[i]+(interval/2)*2/number_defects ,energy+font_space,label_charge,fontsize=16*size)        
-        # format latex-like legend
-        if format_legend:    
-             for name in x_ticks_labels:            
-                x_ticks_labels[x_ticks_labels.index(name)] = name.symbol               
+                    plt.text(x[i] + (interval / 2) * 2 / number_defects, energy + font_space, label_charge,
+                             fontsize=16 * size)
+                    # format latex-like legend
+        if format_legend:
+            for name in x_ticks_labels:
+                x_ticks_labels[x_ticks_labels.index(name)] = name.symbol
         if fermi_level:
-            plt.axhline(y=fermi_level, linestyle='dashed', color='k', linewidth=1.5, label='$\mu _{e}$')   
-        
-        plt.text(x[-1]+interval/8,-0.3,'VB',fontsize=25*size)
-        plt.text(x[-1]+interval/8,self.band_gap+0.2,'CB',fontsize=25*size)
-        plt.xticks(ticks=x_ticks_positions,labels=x_ticks_labels,fontsize = (25-number_defects)*size)
-        plt.tick_params(axis='x',length=0,width=0)
-        plt.yticks(fontsize=16*size)
-        plt.xlim(xlim)  
+            plt.axhline(y=fermi_level, linestyle='dashed', color='k', linewidth=1.5, label='$\mu _{e}$')
+
+        plt.text(x[-1] + interval / 8, -0.3, 'VB', fontsize=25 * size)
+        plt.text(x[-1] + interval / 8, self.band_gap + 0.2, 'CB', fontsize=25 * size)
+        plt.xticks(ticks=x_ticks_positions, labels=x_ticks_labels, fontsize=(25 - number_defects) * size)
+        plt.tick_params(axis='x', length=0, width=0)
+        plt.yticks(fontsize=16 * size)
+        plt.xlim(xlim)
         plt.ylim(ylim)
-        plt.ylabel('Energy(eV)',fontsize=20*size)  
-        
-        return plt    
+        plt.ylabel('Energy(eV)', fontsize=20 * size)
 
+        return plt
 
-    def select_entries(self,entries=None,mode='and',exclude=False,types=None,elements=None,
-                       names=None,function=None,**kwargs):
+    def select_entries(self, entries=None, mode='and', exclude=False, types=None, elements=None,
+                       names=None, function=None, **kwargs):
         """
         Find entries based on different criteria. Returns a list of DefectEntry objects.
 
@@ -754,36 +735,38 @@ class DefectsAnalysis:
         Returns
         -------
         List of DefectEntry objects.
-        """        
-        input_entries = entries if entries else self.entries 
+        """
+        input_entries = entries if entries else self.entries
         functions = []
-        
+
         if types:
             def ftypes(entry):
                 return entry.defect_type in types
+
             functions.append(ftypes)
-        
+
         if elements:
             def felements(entry):
                 for name in entry.name:
                     if name.dspecie in elements:
                         return True
+
             functions.append(felements)
-                
+
         if names:
             def fnames(entry):
                 return entry.name in names
+
             functions.append(fnames)
-        
+
         if function:
             functions.append(function)
-            
-        return select_objects(objects=input_entries,mode=mode,exclude=exclude,
-                              functions=functions,**kwargs)
-    
-    
-    def solve_fermi_level(self,chemical_potentials,bulk_dos,temperature=300,
-                                    fixed_concentrations=None,external_defects=[],xtol=1e-05):
+
+        return select_objects(objects=input_entries, mode=mode, exclude=exclude,
+                              functions=functions, **kwargs)
+
+    def solve_fermi_level(self, chemical_potentials, bulk_dos, temperature=300,
+                          fixed_concentrations=None, external_defects=[], xtol=1e-05):
         """
         Solve charge neutrality and get the value of Fermi level at thermodynamic equilibrium.
         
@@ -809,24 +792,23 @@ class DefectsAnalysis:
         (float)
             Fermi level dictated by charge neutrality.
         """
-        
+
         fdos = FermiDosCarriersInfo(bulk_dos, bandgap=self.band_gap)
-        _,fdos_vbm = fdos.get_cbm_vbm()
+        _, fdos_vbm = fdos.get_cbm_vbm()
 
         def _get_total_q(ef):
             qd_tot = sum([
                 d.charge * d.conc
-                for d in self.defect_concentrations(chemical_potentials,temperature,ef,
+                for d in self.defect_concentrations(chemical_potentials, temperature, ef,
                                                     fixed_concentrations)])
             for d_ext in external_defects:
-                qd_tot += d_ext.charge * d_ext.conc                
+                qd_tot += d_ext.charge * d_ext.conc
             qd_tot += fdos.get_doping(fermi_level=ef + fdos_vbm, temperature=temperature)
             return qd_tot
-                       
-        return bisect(_get_total_q, -1., self.band_gap + 1.,xtol=xtol)
-    
-    
-    def sort_entries(self,inplace=False,entries=None,features=['name','charge'],reverse=False):
+
+        return bisect(_get_total_q, -1., self.band_gap + 1., xtol=xtol)
+
+    def sort_entries(self, inplace=False, entries=None, features=['name', 'charge'], reverse=False):
         """
         Sort defect entries with different criteria.
 
@@ -854,9 +836,8 @@ class DefectsAnalysis:
             self.entries = sorted_entries
         else:
             return sorted_entries
-            
-    
-    def stable_charges(self,chemical_potentials,fermi_level=0,entries=None):
+
+    def stable_charges(self, chemical_potentials, fermi_level=0, entries=None):
         """
         Creating a dictionary with names of single defect entry as keys and
         as value a tuple (charge,formation_energy) that gives the most stable 
@@ -873,7 +854,7 @@ class DefectsAnalysis:
         Returns:
             {name:(stable charge, formation energy)}
        """
-        formation_energies = self.formation_energies(chemical_potentials,fermi_level,entries)        
+        formation_energies = self.formation_energies(chemical_potentials, fermi_level, entries)
         stable_charges = {}
         for name in formation_energies:
             emin = 1e40
@@ -884,29 +865,27 @@ class DefectsAnalysis:
                 if energy < emin:
                     emin = energy
                     q_stable = q
-            stable_charges[name] = (q_stable,emin)
-            
-        return stable_charges
-        
+            stable_charges[name] = (q_stable, emin)
 
-    def _get_total_charge(self,fermi_level,chemical_potentials, bulk_dos, temperature=300, 
-                          fixed_concentrations=None,external_defects=[], per_unit_volume=True):
+        return stable_charges
+
+    def _get_total_charge(self, fermi_level, chemical_potentials, bulk_dos, temperature=300,
+                          fixed_concentrations=None, external_defects=[], per_unit_volume=True):
         fdos = FermiDos(bulk_dos, bandgap=self.band_gap)
-        _,fdos_vbm = fdos.get_cbm_vbm()    
+        _, fdos_vbm = fdos.get_cbm_vbm()
         qd_tot = sum([
             d.charge * d.conc
-            for d in self.defect_concentrations(chemical_potentials,temperature,fermi_level,
-                                                fixed_concentrations,per_unit_volume)])
+            for d in self.defect_concentrations(chemical_potentials, temperature, fermi_level,
+                                                fixed_concentrations, per_unit_volume)])
         for d_ext in external_defects:
             qd_tot += d_ext.charge * d_ext.conc
         qd_tot += fdos.get_doping(fermi_level=fermi_level + fdos_vbm, temperature=temperature)
         return qd_tot
 
 
-
 class SingleDefConc(MSONable):
-    
-    def __init__(self,name,charge,conc,stable=True):
+
+    def __init__(self, name, charge, conc, stable=True):
         """
         Object to store defect concentrations data. It is also subscribtable like a dictionary.
 
@@ -925,21 +904,21 @@ class SingleDefConc(MSONable):
         self.charge = charge
         self.conc = conc
         self.stable = stable
-        
+
     def __repr__(self):
-        s = 'charge=%.1f, conc=%.2e, name=%s, stable=%s' %(self.charge,self.conc,self.name,self.stable)
+        s = 'charge=%.1f, conc=%.2e, name=%s, stable=%s' % (self.charge, self.conc, self.name, self.stable)
         return s
-    
+
     def __print__(self):
         return self.__repr__()
-    
-    def __getitem__(self,key):
-        return getattr(self,key)
-        
-        
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+
 class DefectConcentrations:
-    
-    def __init__(self,concentrations):
+
+    def __init__(self, concentrations):
         """
         Class to store sets of defect concentrations (output of concentration calculations with DefectsAnalysis).
         List of SingleDefConc objects. Subscriptable like a list.
@@ -953,48 +932,46 @@ class DefectConcentrations:
         d = {}
         # calculate total concentrations
         for c in self.concentrations:
-            gname = c.name # previously was the name without label
+            gname = c.name  # previously was the name without label
             if gname not in d.keys():
                 d[gname] = 0
-            d[gname] += c.conc    
+            d[gname] += c.conc
         self._total = d
-      #  store stable concentrations
+        #  store stable concentrations
         conc_stable = []
         for n in self.names:
             concs = self.select_concentrations(name=n)
-            cmax = SingleDefConc(name='',conc=None,charge=0,stable=True) # dummy object
+            cmax = SingleDefConc(name='', conc=None, charge=0, stable=True)  # dummy object
             for c in concs:
                 if cmax.conc is None or c.conc >= cmax.conc:
                     cmax = c
             conc_stable.append(concs[concs.index(cmax)])
         self._stable = conc_stable
-        
-        
+
     def __len__(self):
         return len(self.concentrations)
-        
+
     def __iter__(self):
         return self.concentrations.__iter__()
-    
-    def __getitem__(self,i):
+
+    def __getitem__(self, i):
         return self.concentrations[i]
-    
+
     def __repr__(self):
         return self.__print__()
 
     def __print__(self):
-        return '['+ '\n'.join([c.__print__() for c in self.concentrations])+']'  
+        return '[' + '\n'.join([c.__print__() for c in self.concentrations]) + ']'
 
-   
     def as_dict(self):
         d = [c.as_dict() for c in self.concentrations]
         return d
 
-    @classmethod 
-    def from_dict(cls,d):
+    @classmethod
+    def from_dict(cls, d):
         dc = [SingleDefConc.from_dict(c) for c in d]
         return cls(dc)
- 
+
     @property
     def elemental(self):
         """
@@ -1006,13 +983,12 @@ class DefectConcentrations:
                 if dn.dspecie not in d.keys():
                     if dn.dtype == 'Vacancy':
                         ekey = dn.name
-                        d[ekey] = self.get_element_total(dn.dspecie,vacancy=True)
+                        d[ekey] = self.get_element_total(dn.dspecie, vacancy=True)
                     else:
                         ekey = dn.dspecie
-                        d[ekey] = self.get_element_total(dn.dspecie,vacancy=False)
+                        d[ekey] = self.get_element_total(dn.dspecie, vacancy=False)
         return d
-                    
-    
+
     @property
     def elements(self):
         """
@@ -1020,7 +996,6 @@ class DefectConcentrations:
         """
         return self.elemental.keys()
 
-                
     @property
     def names(self):
         """
@@ -1033,7 +1008,7 @@ class DefectConcentrations:
         """
         Get concentrations of only stable charge states. List of SingleDefConc objects.
         """
-        return self._stable    
+        return self._stable
 
     @property
     def total(self):
@@ -1042,9 +1017,8 @@ class DefectConcentrations:
         """
         return self._total
 
-    
-    def filter_concentrations(self,inplace=False,mode='and',exclude=False,names=None,
-                              charges=None,indexes=None,function=None,**kwargs):
+    def filter_concentrations(self, inplace=False, mode='and', exclude=False, names=None,
+                              charges=None, indexes=None, function=None, **kwargs):
         """
         Filter concentrations based on different criteria.
 
@@ -1074,18 +1048,17 @@ class DefectConcentrations:
         output_concs : (list)
             Filtered DefectConcentrations object.
         """
-        output_concs = self.select_concentrations(mode=mode,exclude=exclude,names=names,
-                                                  charges=charges,indexes=indexes,
-                                                  function=function,**kwargs)
-                    
+        output_concs = self.select_concentrations(mode=mode, exclude=exclude, names=names,
+                                                  charges=charges, indexes=indexes,
+                                                  function=function, **kwargs)
+
         if inplace:
             self.concentrations = output_concs
             return
         else:
             return DefectConcentrations(output_concs)
-            
-        
-    def get_element_total(self,element,vacancy=False):
+
+    def get_element_total(self, element, vacancy=False):
         """
         Get total concentration of every element (summed also across different species)
 
@@ -1105,15 +1078,14 @@ class DefectConcentrations:
         for c in self:
             for dn in c.name:
                 if element == dn.dspecie:
-                    if vacancy and dn.dtype=='Vacancy':
+                    if vacancy and dn.dtype == 'Vacancy':
                         eltot += c.conc
                     elif vacancy == False:
                         eltot += c.conc
         return eltot
-        
 
-    def select_concentrations(self,concentrations=None,mode='and',exclude=False,names=None,
-                    charges=None,indexes=None,function=None,**kwargs):
+    def select_concentrations(self, concentrations=None, mode='and', exclude=False, names=None,
+                              charges=None, indexes=None, function=None, **kwargs):
         """
         Select concentrations based on different criteria.
 
@@ -1145,29 +1117,27 @@ class DefectConcentrations:
         """
         input_concs = concentrations if concentrations else self.concentrations.copy()
         functions = []
-        
+
         if names is not None:
             def fnames(c):
                 return c.name in names
+
             functions.append(fnames)
-        
+
         if charges is not None:
             def fcharges(c):
                 return c.charge in charges
+
             functions.append(fcharges)
-        
+
         if indexes is not None:
             def findexes(c):
                 return input_concs.index(c) in indexes
+
             functions.append(findexes)
-        
+
         if function is not None:
             functions.append(function)
-            
-        return select_objects(objects=input_concs,mode=mode,exclude=exclude,
-                              functions=functions,**kwargs)
-    
-                    
-        
-        
-        
+
+        return select_objects(objects=input_concs, mode=mode, exclude=exclude,
+                              functions=functions, **kwargs)

@@ -143,13 +143,13 @@ class DosPlotter:
         y = None
         alldensities = []
         allenergies = []
-        
-        import matplotlib.pyplot as plt 
-        if get_subplot: #custom
-            plt.subplot(1,2,2) #custom
+
+        import matplotlib.pyplot as plt
+        if get_subplot:  # custom
+            plt.subplot(1, 2, 2)  # custom
             plt = pretty_plot(14, 8, plt=plt)
         else:
-            plt = pretty_plot(12,8)
+            plt = pretty_plot(12, 8)
 
         # Note that this complicated processing of energies is to allow for
         # stacked plots in matplotlib.
@@ -411,7 +411,7 @@ class BSPlotter:
                 if not self._bs.is_metal() else ""}
 
     def get_plot(self, zero_to_efermi=True, ylim=None, smooth=False,
-                 vbm_cbm_marker=False, smooth_tol=None,get_subplot=False):
+                 vbm_cbm_marker=False, smooth_tol=None, get_subplot=False):
         """
         Get a matplotlib object for the bandstructure plot.
         Blue lines are up spin, red lines are down
@@ -427,12 +427,12 @@ class BSPlotter:
             smooth_tol (float) : tolerance for fitting spline to band data.
                 Default is None such that no tolerance will be used.
         """
-        import matplotlib.pyplot as plt 
+        import matplotlib.pyplot as plt
         if get_subplot:
-            plt.subplot(1,2,1)
+            plt.subplot(1, 2, 1)
             plt = pretty_plot(14, 8, plt=plt)
         else:
-            plt = pretty_plot(12,8)
+            plt = pretty_plot(12, 8)
         import scipy.interpolate as scint
 
         # main internal config options
@@ -444,8 +444,8 @@ class BSPlotter:
         # band_linewidth = 3
         band_linewidth = 1
 
-       # if get_subplot:
-       #     plt.subplot(1,2,1)
+        # if get_subplot:
+        #     plt.subplot(1,2,1)
 
         data = self.bs_plot_data(zero_to_efermi)
         if not smooth:
@@ -2158,7 +2158,7 @@ class BSDOSPlotter:
             elements = []
 
         rgb_legend = self.rgb_legend and bs_projection and bs_projection.lower() == "elements" and \
-            len(elements) in [2, 3]
+                     len(elements) in [2, 3]
 
         if bs_projection and bs_projection.lower() == "elements" and \
                 (len(elements) not in [2, 3] or

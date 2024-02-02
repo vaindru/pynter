@@ -303,7 +303,7 @@ class Interstitial(Defect):
                 provided that the defect does not undergo
                 significant relaxation.
         """
-        super().__init__(structure=structure, defect_site=defect_site, charge=charge,multiplicity=multiplicity)
+        super().__init__(structure=structure, defect_site=defect_site, charge=charge, multiplicity=multiplicity)
         self._multiplicity = multiplicity if multiplicity else self.get_multiplicity()
         self.site_name = site_name
 

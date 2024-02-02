@@ -10,9 +10,10 @@ import numpy as np
 from pymatgen.core.periodic_table import Element
 from pynter.phase_diagram.chempots import Chempots, PDHandler, PressureReservoirs
 
+
 class OxygenPressure:
-    
-    def __init__(self,temperature=300,partial_pressure=1):
+
+    def __init__(self, temperature=300, partial_pressure=1):
         """
         Class to extract and organize data regarding chemical potentials as function of oxygen partial pressure.
         Useful for defects analysis for oxides.
@@ -27,8 +28,7 @@ class OxygenPressure:
         self.temperature = temperature
         self.partial_pressure = partial_pressure
 
-
-    def chempot_ideal_gas(self, mu0, temperature=None,partial_pressure=None):
+    def chempot_ideal_gas(self, mu0, temperature=None, partial_pressure=None):
         """
         Get chemical potential at a given temperature and partial pressure. The chemical potential in standard conditions (mu0)
         has to be know.
@@ -50,11 +50,10 @@ class OxygenPressure:
         temperature = temperature if temperature else self.temperature
         partial_pressure = partial_pressure if partial_pressure else self.partial_pressure
         kb = 8.6173324e-5  # eV / K
-        chempot = mu0 + 0.5*kb*temperature*np.log(partial_pressure)
+        chempot = mu0 + 0.5 * kb * temperature * np.log(partial_pressure)
         return chempot
-        
 
-    def get_oxygen_chempot_from_pO2(self,temperature=None,partial_pressure=None):
+    def get_oxygen_chempot_from_pO2(self, temperature=None, partial_pressure=None):
         """
         Get oxygen chemical potential (delta) from temperature and partial pressure
 
@@ -73,11 +72,10 @@ class OxygenPressure:
         temperature = temperature if temperature else self.temperature
         partial_pressure = partial_pressure if partial_pressure else self.partial_pressure
         muO = self.oxygen_standard_chempot(temperature)
-        return self.chempot_ideal_gas(muO,temperature,partial_pressure)        
-    
-    
-    def get_pressure_reservoirs_from_pd(self,phase_diagram,target_comp,temperature=None,
-                                        extrinsic_chempots_range=None,pressure_range=(-20,10),npoints=50,
+        return self.chempot_ideal_gas(muO, temperature, partial_pressure)
+
+    def get_pressure_reservoirs_from_pd(self, phase_diagram, target_comp, temperature=None,
+                                        extrinsic_chempots_range=None, pressure_range=(-20, 10), npoints=50,
                                         get_pressures_as_strings=False):
         """
         Generate Reservoirs object with a set of different chemical potentials starting from a range of oxygen partial pressure.
@@ -119,52 +117,51 @@ class OxygenPressure:
         reservoirs = {}
         pd = phase_diagram
         temperature = temperature if temperature else self.temperature
-        partial_pressures = np.logspace(pressure_range[0],pressure_range[1],num=npoints,base=10)
+        partial_pressures = np.logspace(pressure_range[0], pressure_range[1], num=npoints, base=10)
         mu_standard = self.oxygen_standard_chempot(temperature)
-        
+
         i = 0
         for p in partial_pressures:
             i += 1
-            muO = self.chempot_ideal_gas(mu_standard,temperature=temperature,partial_pressure=p) #delta value
-            fixed_chempot = Chempots({'O':muO})
-            
-            if len(pd.elements) == 2: # 2-component PD case
+            muO = self.chempot_ideal_gas(mu_standard, temperature=temperature, partial_pressure=p)  # delta value
+            fixed_chempot = Chempots({'O': muO})
+
+            if len(pd.elements) == 2:  # 2-component PD case
                 pdh = PDHandler(pd)
                 mu = pdh.calculate_single_chempot(target_comp, fixed_chempot)
                 for el in target_comp.elements:
                     if el is not Element('O'):
                         chempots = fixed_chempot.copy()
-                        chempots.update({el.symbol:mu})
-                    
-            elif len(pd.elements) == 3: # 3-component PD case
+                        chempots.update({el.symbol: mu})
+
+            elif len(pd.elements) == 3:  # 3-component PD case
                 pdh = PDHandler(pd)
                 res = pdh.get_phase_boundaries_chempots(target_comp, fixed_chempot)
                 for el in list(res.values())[0]:
                     chempots_dict[el] = np.mean(np.array([mu[el] for mu in res.values()]))
-                    
-            elif len(pd.elements) > 3: 
+
+            elif len(pd.elements) > 3:
                 raise NotImplementedError('Not implemented for PD with more than 3 components')
-            
+
             chempots = Chempots(chempots_dict)
             chempots_abs = chempots.get_absolute(pdh.mu_refs)
-            
+
             if extrinsic_chempots_range:
                 for el in extrinsic_chempots_range:
-                    mu_el_O_poor,mu_el_O_rich = extrinsic_chempots_range[el][0], extrinsic_chempots_range[el][1]
-                    chempots_abs[el] = mu_el_O_poor + ((mu_el_O_rich - mu_el_O_poor)/npoints)*i 
-                        
+                    mu_el_O_poor, mu_el_O_rich = extrinsic_chempots_range[el][0], extrinsic_chempots_range[el][1]
+                    chempots_abs[el] = mu_el_O_poor + ((mu_el_O_rich - mu_el_O_poor) / npoints) * i
+
             if get_pressures_as_strings:
                 p = "%.1g" % p
                 p = str(p)
             else:
                 p = float("{:.3e}".format(p))
             reservoirs[p] = chempots_abs
-    
-            
-        return PressureReservoirs(reservoirs,temperature,phase_diagram=pd,are_chempots_delta=False)
-                                
 
-    def get_oxygen_pressure_reservoirs(self,oxygen_ref,temperature=None,pressure_range=(-20,10),npoints=50,get_pressures_as_strings=False):
+        return PressureReservoirs(reservoirs, temperature, phase_diagram=pd, are_chempots_delta=False)
+
+    def get_oxygen_pressure_reservoirs(self, oxygen_ref, temperature=None, pressure_range=(-20, 10), npoints=50,
+                                       get_pressures_as_strings=False):
         """
         Get PressureReservoirs object for oxygen starting from the reference value.
 
@@ -187,26 +184,25 @@ class OxygenPressure:
 
         """
         reservoirs = {}
-        mu_refs = Chempots({'O':oxygen_ref})
+        mu_refs = Chempots({'O': oxygen_ref})
         temperature = temperature if temperature else self.temperature
-        partial_pressures = np.logspace(pressure_range[0],pressure_range[1],num=npoints,base=10)
+        partial_pressures = np.logspace(pressure_range[0], pressure_range[1], num=npoints, base=10)
         mu_standard = self.oxygen_standard_chempot(temperature)
         for p in partial_pressures:
             mu = {}
-            muO = self.chempot_ideal_gas(mu_standard,temperature=temperature,partial_pressure=p)
-            mu.update({'O':oxygen_ref + muO})
+            muO = self.chempot_ideal_gas(mu_standard, temperature=temperature, partial_pressure=p)
+            mu.update({'O': oxygen_ref + muO})
             if get_pressures_as_strings:
                 p = "%.1g" % p
                 p = str(p)
             else:
                 p = float("{:.3e}".format(p))
             reservoirs[p] = Chempots(mu)
-        
-        return PressureReservoirs(reservoirs,temperature,phase_diagram=None,
-                                  mu_refs=mu_refs,are_chempots_delta=False)
-    
-    
-    def oxygen_standard_chempot(self,temperature=None):
+
+        return PressureReservoirs(reservoirs, temperature, phase_diagram=None,
+                                  mu_refs=mu_refs, are_chempots_delta=False)
+
+    def oxygen_standard_chempot(self, temperature=None):
         """
         Get value of oxygen delta mu standard (mu_0(T,Po)) at a speficic temperature
         The data is taken from the following work: 
@@ -223,14 +219,9 @@ class OxygenPressure:
 
         """
         temperature = temperature if temperature else self.temperature
-        T = np.array([100,200,300,400,500,600,700,800,900,1000])
-        mu_0 = np.array([-0.08, -0.17,-0.27,-0.38,-0.50,-0.61,-0.73,-0.85,-0.98,-1.10])
-        
-        coef = np.polyfit(T,mu_0,1)
+        T = np.array([100, 200, 300, 400, 500, 600, 700, 800, 900, 1000])
+        mu_0 = np.array([-0.08, -0.17, -0.27, -0.38, -0.50, -0.61, -0.73, -0.85, -0.98, -1.10])
+
+        coef = np.polyfit(T, mu_0, 1)
         poly1d_fn = np.poly1d(coef)
-        return poly1d_fn(temperature)            
-        
-        
-        
-        
-        
+        return poly1d_fn(temperature)

@@ -12,6 +12,7 @@ from pynter import SETTINGS
 
 dbconfig = SETTINGS['dbconfig']
 
+
 # for VaspJob we use pymatgen-db interface
 class VaspJobDrone(VaspToDbTaskDrone):
     """
@@ -22,34 +23,34 @@ class VaspJobDrone(VaspToDbTaskDrone):
     For documentation on input args (https://github.com/materialsproject/pymatgen-db/blob/master/matgendb/creator.py).
     Warning: 'use_full_uri' has been set to False here to allow interface with VaspJob objects.
     """
+
     def __init__(self, job, **kwargs):
-        
-        for k,v in dbconfig['vasp'].items():
+
+        for k, v in dbconfig['vasp'].items():
             if k not in kwargs:
                 kwargs[k] = v
-                   
-        super().__init__(use_full_uri=False,**kwargs)
+
+        super().__init__(use_full_uri=False, **kwargs)
 
         self.job = job
         self._path = self.job.path
-    
-    
-    def assimilate_job(self,check_convergence=True):
+
+    def assimilate_job(self, check_convergence=True):
         """
         Insert VaspJob intro database.
         """
         if check_convergence:
             if self.job.is_converged:
-                doc = self.get_task_doc_from_files()     
+                doc = self.get_task_doc_from_files()
                 self._insert_doc(doc)
             else:
-                warnings.warn(f'VaspJob "{self.job.name}" is not converged and will not be added into the database',UserWarning)
+                warnings.warn(f'VaspJob "{self.job.name}" is not converged and will not be added into the database',
+                              UserWarning)
         else:
-            doc = self.get_task_doc_from_files()     
+            doc = self.get_task_doc_from_files()
             self._insert_doc(doc)
         return
-        
-    
+
     def get_task_doc_from_files(self):
         """
         Get entire task doc from "vasprun.xml" in job path.
@@ -60,6 +61,3 @@ class VaspJobDrone(VaspToDbTaskDrone):
         doc['job_name'] = self.job.name
         doc['is_converged'] = self.job.is_converged
         return doc
-    
-        
-        

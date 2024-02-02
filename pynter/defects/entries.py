@@ -18,10 +18,9 @@ from pynter.defects.elasticity import Stresses
 from pynter.vasp.utils import get_charge_from_computed_entry
 
 
+class DefectEntry(MSONable, metaclass=ABCMeta):
 
-class DefectEntry(MSONable,metaclass=ABCMeta):
-    
-    def __init__(self,defect,energy_diff,corrections,data=None,label=None):
+    def __init__(self, defect, energy_diff, corrections, data=None, label=None):
         """
         Contains the data for a defect calculation.
         
@@ -40,38 +39,37 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
         self._corrections = corrections if corrections else {}
         self._data = data if data else {}
         self._defect.set_label(label)
-        
-    
+
     def __repr__(self):
-        return "DefectEntry: Name=%s, Charge=%i" %(self.name,self.charge)
+        return "DefectEntry: Name=%s, Charge=%i" % (self.name, self.charge)
 
     def __str__(self):
         output = [
             "DefectEntry",
-            "Defect: %s" %(self.defect.__str__()),
-            "Bulk System: %s" %self.bulk_structure.composition,
-            "Energy: %.4f" %self.energy_diff,
-            "Corrections: %.4f" %sum([v for v in self.corrections.values()]),
-            "Charge: %i" %self.charge,
-            "Multiplicity: %i" %self.multiplicity,
-            "Data: %s" %list(self.data.keys()),
-            "Name: %s" %self.name,
+            "Defect: %s" % (self.defect.__str__()),
+            "Bulk System: %s" % self.bulk_structure.composition,
+            "Energy: %.4f" % self.energy_diff,
+            "Corrections: %.4f" % sum([v for v in self.corrections.values()]),
+            "Charge: %i" % self.charge,
+            "Multiplicity: %i" % self.multiplicity,
+            "Data: %s" % list(self.data.keys()),
+            "Name: %s" % self.name,
             "\n"
-            ]
+        ]
         return "\n".join(output)
 
     @property
     def bulk_structure(self):
-        return self.defect.bulk_structure   
+        return self.defect.bulk_structure
 
     @property
     def charge(self):
         return self.defect.charge
-    
+
     @property
     def corrections(self):
         return self._corrections
-    
+
     @property
     def data(self):
         """
@@ -80,22 +78,22 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
         return self._data
 
     @data.setter
-    def data(self,data):
+    def data(self, data):
         self._data = data
-        return 
+        return
 
     @property
     def defect(self):
-        return self._defect  
-    
+        return self._defect
+
     @property
     def defect_specie(self):
         return self.defect.defect_specie
-    
+
     @property
     def defect_type(self):
         return self.defect.defect_type
-    
+
     @property
     def delta_atoms(self):
         """
@@ -103,33 +101,33 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
         and bulk structure as values.
         """
         return self.defect.delta_atoms
-    
+
     @property
     def energy_diff(self):
         return self._energy_diff
-    
+
     @property
     def label(self):
         return self.defect.label
-    
+
     @label.setter
-    def label(self,label):
+    def label(self, label):
         self.defect.set_label(label)
         return
 
     @property
     def multiplicity(self):
         return self.defect.multiplicity
-    
+
     @multiplicity.setter
-    def multiplicity(self,multiplicity):
+    def multiplicity(self, multiplicity):
         self.defect.set_multiplicity(multiplicity)
         return
-            
+
     @property
     def name(self):
         return self.defect.name
-    
+
     @property
     def symbol(self):
         return self.defect.name.symbol
@@ -141,10 +139,9 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
     @property
     def symbol_kroger(self):
         return self.defect.symbol_with_charge_kv
-    
 
     @classmethod
-    def from_dict(cls,d):
+    def from_dict(cls, d):
         """
         Reconstitute a DefectEntry object from a dict representation created using
         as_dict().
@@ -160,11 +157,11 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
         corrections = d['corrections']
         data = d['data']
         label = d['label']
-        return cls(defect=defect,energy_diff=energy_diff,corrections=corrections,data=data,label=label)
+        return cls(defect=defect, energy_diff=energy_diff, corrections=corrections, data=data, label=label)
 
     @staticmethod
-    def from_computed_entries(computed_entry_defect,computed_entry_bulk,corrections,
-                              multiplicity=1,data=None,label=None,tol=1e-03):
+    def from_computed_entries(computed_entry_defect, computed_entry_bulk, corrections,
+                              multiplicity=1, data=None, label=None, tol=1e-03):
         """
         Generate DefectEntry object from Pymatgen's ComputedStructureEntry objects.
 
@@ -190,18 +187,17 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
         Returns
         -------
         DefectEntry
-        """ 
-        entry_df, entry_bulk = computed_entry_defect,computed_entry_bulk
+        """
+        entry_df, entry_bulk = computed_entry_defect, computed_entry_bulk
         charge = get_charge_from_computed_entry(entry_df)
         energy_diff = entry_df.energy - entry_bulk.energy
-        
+
         return DefectEntry.from_structures(entry_df.structure, entry_bulk.structure, energy_diff,
-                                           corrections,charge,multiplicity,data,label,tol=tol)
-        
+                                           corrections, charge, multiplicity, data, label, tol=tol)
 
     @staticmethod
     def from_jobs(job_defect, job_bulk, corrections, defect_structure=None,
-                  multiplicity=1,data=None,label=None,tol=1e-03):
+                  multiplicity=1, data=None, label=None, tol=1e-03):
         """
         Generate DefectEntry object from VaspJob objects.
 
@@ -229,19 +225,18 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
         Returns
         -------
         DefectEntry
-        """ 
+        """
         defect_structure = defect_structure if defect_structure else job_defect.initial_structure
         bulk_structure = job_bulk.final_structure
         energy_diff = job_defect.final_energy - job_bulk.final_energy
         charge = job_defect.charge
-        
-        return DefectEntry.from_structures(defect_structure, bulk_structure, energy_diff, corrections,
-                                                  charge,multiplicity,data,label,tol=tol)
 
+        return DefectEntry.from_structures(defect_structure, bulk_structure, energy_diff, corrections,
+                                           charge, multiplicity, data, label, tol=tol)
 
     @staticmethod
-    def from_structures(defect_structure,bulk_structure,energy_diff,corrections,charge=0,
-                        multiplicity=1,data=None,label=None,tol=1e-03):
+    def from_structures(defect_structure, bulk_structure, energy_diff, corrections, charge=0,
+                        multiplicity=1, data=None, label=None, tol=1e-03):
         """
         Generate DefectEntry object from Structure objects.
 
@@ -272,7 +267,7 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
         -------
         DefectEntry
         """
-        defect = defect_finder(defect_structure, bulk_structure,tol=tol)
+        defect = defect_finder(defect_structure, bulk_structure, tol=tol)
         defect.set_charge(charge)
         if multiplicity:
             defect.set_multiplicity(multiplicity)
@@ -283,12 +278,11 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
             except NotImplementedError:
                 warnings.warn(f'get_multiplicity not implemented for {defect.defect_type}, setting multiplicity to 1')
                 defect.set_multiplicity(1)
-        
-        return DefectEntry(defect, energy_diff, corrections,data,label)
 
+        return DefectEntry(defect, energy_diff, corrections, data, label)
 
-    def defect_concentration(self, vbm, chemical_potentials, temperature=300, fermi_level=0.0, 
-                             per_unit_volume=True,occupation_function='MB'):
+    def defect_concentration(self, vbm, chemical_potentials, temperature=300, fermi_level=0.0,
+                             per_unit_volume=True, occupation_function='MB'):
         """
         Compute the defect concentration for a temperature and Fermi level.
         Args:
@@ -299,19 +293,19 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
         Returns:
             defects concentration in cm^-3
         """
-        n = self.defect.site_concentration_in_cm3 if per_unit_volume else self.multiplicity 
+        n = self.defect.site_concentration_in_cm3 if per_unit_volume else self.multiplicity
         eform = self.formation_energy(vbm, chemical_potentials, fermi_level=fermi_level)
-        
-        if occupation_function=='FD':
-            conc = n * fermi_dirac(eform,temperature)
-        elif occupation_function=='MB':
-            conc = n * maxwell_boltzmann(eform,temperature)
+
+        if occupation_function == 'FD':
+            conc = n * fermi_dirac(eform, temperature)
+        elif occupation_function == 'MB':
+            conc = n * maxwell_boltzmann(eform, temperature)
         else:
-            raise ValueError('Invalid occupation function. Options are: "FD" for Fermi-Dirac and "MB" for Maxwell-Boltzmann.')
+            raise ValueError(
+                'Invalid occupation function. Options are: "FD" for Fermi-Dirac and "MB" for Maxwell-Boltzmann.')
         return conc
 
-
-    def formation_energy(self,vbm,chemical_potentials,fermi_level=0):
+    def formation_energy(self, vbm, chemical_potentials, fermi_level=0):
         """
         Compute the formation energy for a defect taking into account a given chemical potential and fermi_level
         Args:
@@ -321,22 +315,22 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
                 Values are float numbers equal to the atomic chemical potential for that element.
             fermi_level (float):  Value corresponding to the electron chemical potential.
             """
-            
-        formation_energy = (self.energy_diff + self.charge*(vbm+fermi_level) + 
-                       sum([ self.corrections[correction_type]  for correction_type in self.corrections ]) 
-                        ) 
-        
+
+        formation_energy = (self.energy_diff + self.charge * (vbm + fermi_level) +
+                            sum([self.corrections[correction_type] for correction_type in self.corrections])
+                            )
+
         if chemical_potentials:
-            chempot_correction = -1 * sum([self.delta_atoms[el]*chemical_potentials[el] for el in self.delta_atoms])
+            chempot_correction = -1 * sum([self.delta_atoms[el] * chemical_potentials[el] for el in self.delta_atoms])
         else:
             chempot_correction = 0
-            
+
         formation_energy = formation_energy + chempot_correction
-        
+
         return formation_energy
-    
-    
-    def relaxation_volume(self,stress_bulk,bulk_modulus,add_corrections=True): #still to decide weather to keep this method
+
+    def relaxation_volume(self, stress_bulk, bulk_modulus,
+                          add_corrections=True):  # still to decide weather to keep this method
         """
         Calculate relaxation volume from stresses. Stresses data needs to be in numpy.array format and present 
         in the "data" dictionary with realtive "stress" key. Duplicate of function that can be found in Stresses
@@ -360,8 +354,7 @@ class DefectEntry(MSONable,metaclass=ABCMeta):
         return es.get_relaxation_volume(self, bulk_modulus)
 
 
-
-def fermi_dirac(E,T):
+def fermi_dirac(E, T):
     """
     Returns the defect occupation as a function of the formation energy,
     using the Fermi-Dirac distribution with chemical potential equal to 0. 
@@ -369,10 +362,10 @@ def fermi_dirac(E,T):
         E (float): energy in eV
         T (float): the temperature in kelvin
     """
-    return 1. / (1. + np.exp(E/(kb*T)) )
+    return 1. / (1. + np.exp(E / (kb * T)))
 
 
-def maxwell_boltzmann(E,T):
+def maxwell_boltzmann(E, T):
     """
     Returns the defect occupation as a function of the formation energy,
     using the exponential dependence of the Maxwell-Boltzmann distribution. 
@@ -382,4 +375,4 @@ def maxwell_boltzmann(E,T):
         E (float): energy in eV
         T (float): the temperature in kelvin
     """
-    return np.exp(-1.0*E /(kb*T)) 
+    return np.exp(-1.0 * E / (kb * T))

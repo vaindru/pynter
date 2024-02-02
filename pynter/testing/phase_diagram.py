@@ -13,20 +13,22 @@ class ChempotsTest(PynterTest):
     """
     Provides methods to test Chempots objects
     """
-    def assert_Chempots_equal(self,chempots1, chempots2, **kwargs):
+
+    def assert_Chempots_equal(self, chempots1, chempots2, **kwargs):
         """
         Both Chempots or dictionary objects are allowed as input
         """
         dict1 = chempots1 if type(chempots1) == dict else chempots1.mu
         dict2 = chempots2 if type(chempots2) == dict else chempots2.mu
         self.assert_object_almost_equal(dict1, dict2, **kwargs)
-        
-        
+
+
 class ReservoirsTest(ChempotsTest):
     """
     Provides methods to test Reservoirs objects
     """
-    def assert_Reservoirs_equal(self,reservoirs1, reservoirs2, check_reference=True, **kwargs):
+
+    def assert_Reservoirs_equal(self, reservoirs1, reservoirs2, check_reference=True, **kwargs):
         """
         Reservoirs dictionary, reference chempots and are_chempots_delta are checked.
         Set check_reference to False to check only reservoirs dictionary.

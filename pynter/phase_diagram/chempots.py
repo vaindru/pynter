@@ -1,4 +1,3 @@
-
 import warnings
 import json
 import os.path as op
@@ -14,8 +13,8 @@ import copy
 
 
 class Chempots(MSONable):
-    
-    def __init__(self,chempots_dict,ndecimals=6):
+
+    def __init__(self, chempots_dict, ndecimals=6):
         """
         Class to handle set of chemical potentials. Behaves like a python dictionary.
         The dictionary needs to be set with element symbols as keys and chemical potentials 
@@ -31,10 +30,10 @@ class Chempots(MSONable):
             
         """
         if ndecimals:
-            self._mu = {el:round(v,ndecimals) for el,v in chempots_dict.items()}
+            self._mu = {el: round(v, ndecimals) for el, v in chempots_dict.items()}
         else:
             self._mu = chempots_dict
-    
+
     @property
     def mu(self):
         """
@@ -44,7 +43,7 @@ class Chempots(MSONable):
 
     def __str__(self):
         return self.mu.__str__()
-    
+
     def __repr__(self):
         return self.__str__()
 
@@ -54,17 +53,17 @@ class Chempots(MSONable):
     def __iter__(self):
         return self.mu.keys().__iter__()
 
-    def __getitem__(self,el):
+    def __getitem__(self, el):
         return self.mu[el]
 
-    def __setitem__(self,el,value):
+    def __setitem__(self, el, value):
         self.mu[el] = value
         return
-    
-    def __delitem__(self,el):
+
+    def __delitem__(self, el):
         del self.mu[el]
         return
-    
+
     def __eq__(self, other):
         if isinstance(other, dict):
             return self.mu == other
@@ -78,13 +77,13 @@ class Chempots(MSONable):
 
     def values(self):
         return self.mu.values()
-    
+
     def items(self):
         return self.mu.items()
 
     def copy(self):
         return Chempots(copy.deepcopy(self.mu))
-    
+
     def update(self, other):
         if isinstance(other, dict):
             for key, value in other.items():
@@ -92,8 +91,7 @@ class Chempots(MSONable):
         else:
             for key, value in other:
                 self.mu[key] = value
-    
-    
+
     def as_dict(self):
         """
         Json-serializable dict representation of a Chempots object. 
@@ -104,12 +102,12 @@ class Chempots(MSONable):
             Json-serializable dict of a Chempots object.
         """
         d = {
-        "@module": self.__class__.__module__,
-        "@class": self.__class__.__name__,
-        "chempots":self.mu
+            "@module": self.__class__.__module__,
+            "@class": self.__class__.__name__,
+            "chempots": self.mu
         }
         return d
-    
+
     @staticmethod
     def from_dict(d):
         """
@@ -125,7 +123,7 @@ class Chempots(MSONable):
         """
         chempots = d["chempots"]
         return Chempots(chempots)
-    
+
     @staticmethod
     def from_pmg_elements(d):
         """
@@ -141,8 +139,8 @@ class Chempots(MSONable):
         -------
         Chempots.
         """
-        return Chempots({el.symbol:value for el,value in d.items()})
-    
+        return Chempots({el.symbol: value for el, value in d.items()})
+
     def to_pmg_elements(self):
         """
         Convert the Chempots object to a dictionary in the format {Element:value}. 
@@ -153,10 +151,9 @@ class Chempots(MSONable):
         -------
         Dictionary in the format {Element:value}
         """
-        return {Element(el):value for el,value in self.mu.items()}
-    
-    
-    def get_absolute(self,mu_refs):
+        return {Element(el): value for el, value in self.mu.items()}
+
+    def get_absolute(self, mu_refs):
         """
         Get Chempots object with chemical potentials converted to absolute values (mu + mu_ref)
 
@@ -169,10 +166,9 @@ class Chempots(MSONable):
         -------
         Chempots values converted to absolute (mu + mu_ref).
         """
-        return Chempots({el:self.mu[el] + mu_refs[el] for el in self.mu})
-        
-    
-    def get_referenced(self,mu_refs):
+        return Chempots({el: self.mu[el] + mu_refs[el] for el in self.mu})
+
+    def get_referenced(self, mu_refs):
         """
         Get Chempots object with chemical potentials converted to referenced values (mu - mu_ref)
 
@@ -185,13 +181,12 @@ class Chempots(MSONable):
         -------
         Chempots values converted to referenced (mu - mu_ref).
         """
-        return Chempots({el:self.mu[el] - mu_refs[el] for el in self.mu})
-            
-        
-        
+        return Chempots({el: self.mu[el] - mu_refs[el] for el in self.mu})
+
+
 class Reservoirs(MSONable):
-    
-    def __init__(self,res_dict,phase_diagram=None,mu_refs=None,are_chempots_delta=False):
+
+    def __init__(self, res_dict, phase_diagram=None, mu_refs=None, are_chempots_delta=False):
         """
         Class to handle dictionaries of chemical potentials. Works almost completely like a python dictionary.
 
@@ -215,14 +210,15 @@ class Reservoirs(MSONable):
             self.mu_refs = PDHandler(self.pd).get_chempots_reference()
         else:
             self.mu_refs = mu_refs
-            warnings.warn('Neither PhaseDiagram or reference chempots have been provided, conversions btw ref and abs value will not be possible',UserWarning)
+            warnings.warn(
+                'Neither PhaseDiagram or reference chempots have been provided, conversions btw ref and abs value will not be possible',
+                UserWarning)
         self.are_chempots_delta = are_chempots_delta
-
 
     def __str__(self):
         df = self.get_dataframe()
         return df.__str__()
-    
+
     def __repr__(self):
         return self.__str__()
 
@@ -232,13 +228,13 @@ class Reservoirs(MSONable):
     def __iter__(self):
         return self.res_dict.keys().__iter__()
 
-    def __getitem__(self,reskey):
+    def __getitem__(self, reskey):
         return self.res_dict[reskey]
 
-    def __setitem__(self,reskey,chempots):
+    def __setitem__(self, reskey, chempots):
         self.res_dict[reskey] = chempots
         return
-    
+
     def __eq__(self, other):
         if isinstance(other, dict):
             return self.res_dict == other
@@ -252,14 +248,14 @@ class Reservoirs(MSONable):
 
     def values(self):
         return self.res_dict.values()
-    
+
     def items(self):
         return self.res_dict.items()
 
     def copy(self):
-        return Reservoirs(copy.deepcopy(self.res_dict),phase_diagram=self.pd,
-                          are_chempots_delta=self.are_chempots_delta,mu_refs=self.mu_refs)
-    
+        return Reservoirs(copy.deepcopy(self.res_dict), phase_diagram=self.pd,
+                          are_chempots_delta=self.are_chempots_delta, mu_refs=self.mu_refs)
+
     def update(self, other):
         if isinstance(other, dict):
             for key, value in other.items():
@@ -267,7 +263,6 @@ class Reservoirs(MSONable):
         else:
             for key, value in other:
                 self.res_dict[key] = value
-
 
     def as_dict(self):
         """
@@ -281,14 +276,13 @@ class Reservoirs(MSONable):
         d = {}
         d['@module'] = self.__class__.__module__
         d['@class'] = self.__class__.__name__
-        d['res_dict'] = {r:mu.as_dict() for r,mu in self.res_dict.items()} 
+        d['res_dict'] = {r: mu.as_dict() for r, mu in self.res_dict.items()}
         d['phase_diagram'] = self.pd.as_dict() if self.pd else None
         d['mu_refs'] = self.mu_refs.as_dict() if self.mu_refs else None
         d['are_chempots_delta'] = self.are_chempots_delta
         return d
 
-
-    def to_json(self,path,cls=MontyEncoder):
+    def to_json(self, path, cls=MontyEncoder):
         """
         Save Reservoirs object as json string or file
 
@@ -306,15 +300,14 @@ class Reservoirs(MSONable):
         """
         d = self.as_dict()
         if path:
-            with open(path,'w') as file:
-                json.dump(d,file,cls=cls)
+            with open(path, 'w') as file:
+                json.dump(d, file, cls=cls)
             return
         else:
-            return d.__str__()  
-
+            return d.__str__()
 
     @classmethod
-    def from_dict(cls,d):
+    def from_dict(cls, d):
         """
         Constructor of Reservoirs object from dictionary representation.
         
@@ -327,14 +320,13 @@ class Reservoirs(MSONable):
         Reservoirs object.
         """
         res_dict = {}
-        for res,chempots in d['res_dict'].items():
+        for res, chempots in d['res_dict'].items():
             res_dict[res] = Chempots.from_dict(chempots)
         phase_diagram = PhaseDiagram.from_dict(d['phase_diagram']) if d['phase_diagram'] else None
         mu_refs = Chempots.from_dict(d['mu_refs']) if d['mu_refs'] else None
         are_chempots_delta = d['are_chempots_delta']
-            
-        return cls(res_dict,phase_diagram,mu_refs,are_chempots_delta)
 
+        return cls(res_dict, phase_diagram, mu_refs, are_chempots_delta)
 
     @staticmethod
     def from_json(path_or_string):
@@ -359,8 +351,7 @@ class Reservoirs(MSONable):
             d = json.loads(path_or_string)
         return Reservoirs.from_dict(d)
 
-
-    def filter_reservoirs(self,inplace=False,elements=None):
+    def filter_reservoirs(self, inplace=False, elements=None):
         """
         Get new Reservoir object filtering the chempots dictionary.
 
@@ -395,16 +386,14 @@ class Reservoirs(MSONable):
             res.mu_refs = mu_refs
             return res
 
-
     def get_absolute_res_dict(self):
         """ 
         Return values of chempots from referenced to absolute 
         """
         if self.are_chempots_delta:
-            return {r:mu.get_absolute(self.mu_refs) for r,mu in self.res_dict.items()}
+            return {r: mu.get_absolute(self.mu_refs) for r, mu in self.res_dict.items()}
         else:
             raise ValueError('Chemical potential values are already absolute')
-                
 
     def get_referenced_res_dict(self):
         """ 
@@ -413,10 +402,9 @@ class Reservoirs(MSONable):
         if self.are_chempots_delta:
             raise ValueError('Chemical potential values are already with respect to reference')
         else:
-            return {r:mu.get_referenced(self.mu_refs) for r,mu in self.res_dict.items()}
+            return {r: mu.get_referenced(self.mu_refs) for r, mu in self.res_dict.items()}
 
-    
-    def get_dataframe(self,format_symbols=False,format_compositions=False,all_math=False,ndecimals=None):
+    def get_dataframe(self, format_symbols=False, format_compositions=False, all_math=False, ndecimals=None):
         """
         Get DataFrame object of the dictionary of reservoirs
 
@@ -443,24 +431,22 @@ class Reservoirs(MSONable):
         if format_compositions:
             new_index = []
             for string in df.index:
-                new_string = format_composition(string,all_math=all_math)
+                new_string = format_composition(string, all_math=all_math)
                 new_index.append(new_string)
             df.index = new_index
         if ndecimals:
             df = df.round(decimals=ndecimals)
         return df
-        
-    
-    def get_latex_table(self,ndecimals=1):
+
+    def get_latex_table(self, ndecimals=1):
         """
         Get string with formatted latex table of chemical potentials
         """
-        df = self.get_dataframe(format_symbols=True,ndecimals=ndecimals)
+        df = self.get_dataframe(format_symbols=True, ndecimals=ndecimals)
         table = df.to_latex(escape=False)
         return table
-    
-    
-    def get_plot(self,elements,size=1,**kwargs):
+
+    def get_plot(self, elements, size=1, **kwargs):
         """
         Plot the stability diagram with the reservoir points
 
@@ -478,18 +464,17 @@ class Reservoirs(MSONable):
         plt : 
             Matplotlib object.
         """
-        from pynter.phase_diagram.plotter import PDPlotterAdder # import here to avoid circular import
+        from pynter.phase_diagram.plotter import PDPlotterAdder  # import here to avoid circular import
         res = self.copy()
         if not res.pd:
             raise ValueError('PhaseDiagram object needs to be stored to plot the stability diagram')
         plt = PDHandler(res.pd).get_stability_diagram(elements)
         if not res.are_chempots_delta:
             res.set_to_referenced()
-            
-        plt = PDPlotterAdder(res.pd,size).add_reservoirs(res,elements,**kwargs)
+
+        plt = PDPlotterAdder(res.pd, size).add_reservoirs(res, elements, **kwargs)
         return plt
-                
-    
+
     def set_to_absolute(self):
         """
         Set reservoir dictionary to absolute values of chempots.
@@ -499,7 +484,6 @@ class Reservoirs(MSONable):
         self.are_chempots_delta = False
         return
 
-        
     def set_to_referenced(self):
         """
         Set reservoir dictionary to referenced values of chempots.
@@ -507,37 +491,36 @@ class Reservoirs(MSONable):
         new_res_dict = self.get_referenced_res_dict()
         self.res_dict = new_res_dict
         self.are_chempots_delta = True
-        return    
-    
-                
-    def _get_res_dict_with_symbols(self,format_symbols=False):
+        return
+
+    def _get_res_dict_with_symbols(self, format_symbols=False):
         """
         format_labels : (bool), optional
             Format labels of element chempots as \Delta \mu_{\text{"el"}}. The default is False.
         """
         new_dict = {}
-        for res,chempots in self.res_dict.items():
+        for res, chempots in self.res_dict.items():
             new_dict[res] = {}
-            chempots = chempots.mu #keep just dict for DataFrame
+            chempots = chempots.mu  # keep just dict for DataFrame
             for el in chempots:
                 if format_symbols:
-                    label = '$\Delta \mu_{\text{%s}}$' %el
+                    label = '$\Delta \mu_{\text{%s}}$' % el
                 else:
                     label = el
                 new_dict[res][label] = chempots[el]
         return new_dict
 
-    
+
 class PressureReservoirs(Reservoirs):
     """
     Subclass of Reservoirs which contains temperature information. Useful for partial pressure analysis. 
     """
-    def __init__(self,res_dict,temperature=None,phase_diagram=None,mu_refs=None,are_chempots_delta=False):
-        super().__init__(res_dict,phase_diagram,mu_refs,are_chempots_delta)
+
+    def __init__(self, res_dict, temperature=None, phase_diagram=None, mu_refs=None, are_chempots_delta=False):
+        super().__init__(res_dict, phase_diagram, mu_refs, are_chempots_delta)
         self.temperature = temperature
         self.pressures = list(self.res_dict.keys())
-        
-    
+
     def __eq__(self, other):
         if isinstance(other, dict):
             return self.res_dict == other
@@ -545,8 +528,7 @@ class PressureReservoirs(Reservoirs):
             return self.res_dict == other.res_dict
         else:
             return False
-        
-    
+
     def as_dict(self):
         """
         Json-serializable dict representation of a PressureReservoirs object. The Pymatgen element 
@@ -560,16 +542,15 @@ class PressureReservoirs(Reservoirs):
         d = {}
         d['@module'] = self.__class__.__module__
         d['@class'] = self.__class__.__name__
-        d['res_dict'] = {r:mu.as_dict() for r,mu in self.res_dict.items()}
+        d['res_dict'] = {r: mu.as_dict() for r, mu in self.res_dict.items()}
         d['temperature'] = self.temperature
         d['phase_diagram'] = self.pd.as_dict() if self.pd else None
         d['mu_refs'] = self.mu_refs.as_dict() if self.mu_refs else None
         d['are_chempots_delta'] = self.are_chempots_delta
         return d
 
-
     @classmethod
-    def from_dict(cls,d):
+    def from_dict(cls, d):
         """
         Constructor of PressureReservoirs object from dictionary representation.
         
@@ -581,14 +562,13 @@ class PressureReservoirs(Reservoirs):
         -------
         PressureReservoirs object.
         """
-        res_dict = {float(r):Chempots.from_dict(mu) for r,mu in d['res_dict'].items()}
+        res_dict = {float(r): Chempots.from_dict(mu) for r, mu in d['res_dict'].items()}
         temperature = d['temperature'] if 'temperature' in d.keys() else None
         phase_diagram = PhaseDiagram.from_dict(d['phase_diagram']) if d['phase_diagram'] else None
-        mu_refs = Chempots.from_dict(d['mu_refs'])  if d['mu_refs'] else None
+        mu_refs = Chempots.from_dict(d['mu_refs']) if d['mu_refs'] else None
         are_chempots_delta = d['are_chempots_delta']
-            
-        return cls(res_dict,temperature,phase_diagram,mu_refs,are_chempots_delta)
 
+        return cls(res_dict, temperature, phase_diagram, mu_refs, are_chempots_delta)
 
     @staticmethod
     def from_json(path_or_string):
@@ -611,14 +591,12 @@ class PressureReservoirs(Reservoirs):
                 d = json.load(file)
         else:
             d = json.load(path_or_string)
-        return PressureReservoirs.from_dict(d)    
-    
-    
-    
-    
+        return PressureReservoirs.from_dict(d)
+
+
 class PDHandler:
-    
-    def __init__(self,phase_diagram):
+
+    def __init__(self, phase_diagram):
         """
         Class to generate and handle Pymatgen phase diagram more rapidly.
 
@@ -627,11 +605,10 @@ class PDHandler:
         phase_diagram : (PhaseDiagram)
             Pymatgen PhaseDiagram object
         """
-        self.pd = phase_diagram 
+        self.pd = phase_diagram
         self.mu_refs = self.get_chempots_reference()
 
-
-    def calculate_single_chempot(self,comp,chempots_ref):
+    def calculate_single_chempot(self, comp, chempots_ref):
         """
         Calculate referenced chemical potential in a given composition and given
         the chemical potentials of the other elements.
@@ -648,19 +625,18 @@ class PDHandler:
         -------
         mu : (float)
             Chemical potential.
-        """        
+        """
         form_energy = self.get_formation_energy_from_stable_comp(comp)
         mu = form_energy
-        for el,coeff in comp.items():
+        for el, coeff in comp.items():
             if el.symbol in chempots_ref:
-                mu += -1*coeff * chempots_ref[el.symbol]
+                mu += -1 * coeff * chempots_ref[el.symbol]
             else:
                 factor = coeff
-        
-        return mu/factor
 
+        return mu / factor
 
-    def get_all_boundaries_chempots(self,comp):
+    def get_all_boundaries_chempots(self, comp):
         """
         Get chemical potentials at the corners of the stability ta given composition.
 
@@ -675,12 +651,11 @@ class PDHandler:
             Chempots object.
         """
         chempots_pmg = self.pd.get_all_chempots(comp)
-        for r,mu in chempots_pmg.items():
-            chempots_pmg[r] = {k:v.item() for k,v in mu.items()} # convert from np.float64
-        chempots = {r:Chempots.from_pmg_elements(mu) for r,mu in chempots_pmg.items()}
+        for r, mu in chempots_pmg.items():
+            chempots_pmg[r] = {k: v.item() for k, v in mu.items()}  # convert from np.float64
+        chempots = {r: Chempots.from_pmg_elements(mu) for r, mu in chempots_pmg.items()}
         return chempots
 
-        
     def get_chempots_reference(self):
         """
         Gets elemental reference compounds and respective e.p.a with Pymatgen el_ref attribute in PhaseDiagram class.
@@ -695,7 +670,6 @@ class PDHandler:
             chempots_ref[el] = pd.el_refs[el].energy_per_atom
         chempots_ref = {k: v for k, v in sorted(chempots_ref.items(), key=lambda item: item[0])}
         return Chempots.from_pmg_elements(chempots_ref)
-       
 
     def get_dataframe(self):
         """
@@ -707,40 +681,38 @@ class PDHandler:
             d = {}
             d['Composition'] = format_composition(e.composition.reduced_formula)
             sg = SpaceGroup(e.structure.get_space_group_info()[0])
-            crystal_system, sg_string = sg.crystal_system , sg.to_latex_string()
+            crystal_system, sg_string = sg.crystal_system, sg.to_latex_string()
             if e.__class__.__name__ == 'ComputedStructureEntry':
                 d['Structure'] = f'{crystal_system.capitalize()} ({sg_string})'
             else:
                 d['Structure'] = None
-            d['Formation energy p.a (eV)'] = np.around(self.pd.get_form_energy_per_atom(e),decimals=2)
+            d['Formation energy p.a (eV)'] = np.around(self.pd.get_form_energy_per_atom(e), decimals=2)
             phases.append(d)
         df = DataFrame(phases)
         return df
 
-        
-    def get_entries_from_comp(self,comp):
-       """
-       Get a list of entries corrisponding to the target composition.
-       
-       Parameters
-       ----------
-       comp : (Pymatgen Composition object)
-       Returns
-       -------
-       List of Pymatgen PDEntry objects
-       """
-       target_entries=[]
-       pd = self.pd
-       for e in pd.all_entries:
-           if e.composition.reduced_composition == comp:
-               target_entries.append(e)
-       if target_entries != []:
-           return target_entries
-       else:
-           raise ValueError('No entry has been found for target composition:%s' %comp.reduced_formula)
-               
+    def get_entries_from_comp(self, comp):
+        """
+        Get a list of entries corrisponding to the target composition.
 
-    def get_formation_energies_from_comp(self,comp):
+        Parameters
+        ----------
+        comp : (Pymatgen Composition object)
+        Returns
+        -------
+        List of Pymatgen PDEntry objects
+        """
+        target_entries = []
+        pd = self.pd
+        for e in pd.all_entries:
+            if e.composition.reduced_composition == comp:
+                target_entries.append(e)
+        if target_entries != []:
+            return target_entries
+        else:
+            raise ValueError('No entry has been found for target composition:%s' % comp.reduced_formula)
+
+    def get_formation_energies_from_comp(self, comp):
         """
         Get dictionary of formation energies for all entries of a given reduced composition
 
@@ -756,11 +728,10 @@ class PDHandler:
         form_energies = {}
         for e in self.get_entries_from_comp(comp):
             factor = e.composition.get_reduced_composition_and_factor()[1]
-            form_energies[e] = pd.get_form_energy(e)/factor
+            form_energies[e] = pd.get_form_energy(e) / factor
         return form_energies
-            
 
-    def get_formation_energy_from_stable_comp(self,comp):
+    def get_formation_energy_from_stable_comp(self, comp):
         """
         Get formation energy of a target stable composition
 
@@ -775,10 +746,9 @@ class PDHandler:
         pd = self.pd
         entry = self.get_stable_entry_from_comp(comp)
         factor = entry.composition.get_reduced_composition_and_factor()[1]
-        return pd.get_form_energy(entry)/factor
-        
+        return pd.get_form_energy(entry) / factor
 
-    def get_phase_boundaries_chempots(self,comp,chempot_ref):
+    def get_phase_boundaries_chempots(self, comp, chempot_ref):
         """
         Given a composition and a fixed chemical potential, this function analises the composition of the boundary phases
         and the associated chemical potentials at the boundaries. Only works for 3 component PD.
@@ -794,20 +764,19 @@ class PDHandler:
         -------
         chempots : (Dict)
             Dictionary with compositions at the boundaries as keys and delta chemical potentials as value.
-        """       
+        """
         chempots = {}
-        comp1,comp2 = self.get_phase_boundaries_compositions(comp, chempot_ref)
-        
-        boundary = '-'.join([comp1.reduced_formula,comp.reduced_formula])
+        comp1, comp2 = self.get_phase_boundaries_compositions(comp, chempot_ref)
+
+        boundary = '-'.join([comp1.reduced_formula, comp.reduced_formula])
         chempots[boundary] = self.solve_phase_boundary_chempots(comp1, comp, chempot_ref)
-        
-        boundary = '-'.join([comp.reduced_formula,comp2.reduced_formula])
+
+        boundary = '-'.join([comp.reduced_formula, comp2.reduced_formula])
         chempots[boundary] = self.solve_phase_boundary_chempots(comp, comp2, chempot_ref)
-        
-        return chempots      
-                  
-    
-    def get_phase_boundaries_compositions(self,comp,chempot_ref):
+
+        return chempots
+
+    def get_phase_boundaries_compositions(self, comp, chempot_ref):
         """
         Get compositions of phases in boundary of stability with a target composition given a fixed chemical potential 
         on one component. Currently only works for 3-component PD (to check). 
@@ -829,7 +798,7 @@ class PDHandler:
         """
         chempot_ref = Chempots(chempot_ref)
         fixed_chempot = chempot_ref.get_absolute(self.mu_refs).to_pmg_elements()
-        
+
         entries = self.pd.all_entries
         gpd = GrandPotentialPhaseDiagram(entries, fixed_chempot)
         stable_entries = gpd.stable_entries
@@ -838,8 +807,9 @@ class PDHandler:
             if e.original_comp.reduced_composition == comp:
                 comp_in_stable_entries = True
         if comp_in_stable_entries == False:
-            raise ValueError('Target composition %s is not a stable entry for fixed chemical potential: %s' %(comp.reduced_formula,fixed_chempot))
-        
+            raise ValueError('Target composition %s is not a stable entry for fixed chemical potential: %s' % (
+            comp.reduced_formula, fixed_chempot))
+
         el = comp.elements[0]
         x_target = comp.get_wt_fraction(el)
         x_max_left = 0
@@ -854,10 +824,9 @@ class PDHandler:
                 if x > x_target and x <= x_min_right:
                     x_min_right = x
                     comp2 = c
-        return comp1.reduced_composition,comp2.reduced_composition   
-                  
-                    
-    def solve_phase_boundary_chempots(self,comp1,comp2,chempot_ref):
+        return comp1.reduced_composition, comp2.reduced_composition
+
+    def solve_phase_boundary_chempots(self, comp1, comp2, chempot_ref):
         """
         Given a fixed chemical potential, gets the values of the remaining two chemical potentials
         in the boundary between two phases (region where the two phases coexist). Only works for 3-component PD (to check).
@@ -880,14 +849,14 @@ class PDHandler:
         chempots_boundary : (Dict)
             Dictionary of chemical potentials.
         """
-        chempots_boundary ={}
+        chempots_boundary = {}
         chempot_ref = Chempots(chempot_ref)
         mu_fixed = chempot_ref.to_pmg_elements()
-        for el,chempot in mu_fixed.items():
+        for el, chempot in mu_fixed.items():
             el_fixed, mu_fixed = el, chempot
         e1 = self.get_formation_energy_from_stable_comp(comp1)
         e2 = self.get_formation_energy_from_stable_comp(comp2)
-        
+
         coeff1 = []
         coeff2 = []
         # order of variables (mu) will follow the order of self.chempots_reference which is alphabetically ordered
@@ -901,12 +870,12 @@ class PDHandler:
                 if el not in comp2:
                     coeff2.append(0)
                 else:
-                    coeff2.append(comp2[el])                
-        a = np.array([coeff1,coeff2])
-        
-        const1 = e1 - comp1[el_fixed]*mu_fixed if el_fixed in comp1 else e1 
-        const2 = e2 - comp2[el_fixed]*mu_fixed if el_fixed in comp2 else e2
-        b = np.array([const1,const2])
+                    coeff2.append(comp2[el])
+        a = np.array([coeff1, coeff2])
+
+        const1 = e1 - comp1[el_fixed] * mu_fixed if el_fixed in comp1 else e1
+        const2 = e2 - comp2[el_fixed] * mu_fixed if el_fixed in comp2 else e2
+        b = np.array([const1, const2])
         x = np.linalg.solve(a, b)
         # output will follow the order given in input
         counter = 0
@@ -914,20 +883,18 @@ class PDHandler:
             if el != el_fixed:
                 chempots_boundary[el] = x[counter]
                 counter += 1
-        chempots_boundary[el_fixed] = mu_fixed        
-        
-        return Chempots.from_pmg_elements(chempots_boundary) 
+        chempots_boundary[el_fixed] = mu_fixed
 
+        return Chempots.from_pmg_elements(chempots_boundary)
 
-    def get_plot(self,**kwargs):
+    def get_plot(self, **kwargs):
         """
         Get plot with Pymatgen
         """
-        PDPlotter(self.pd,show_unstable=0,backend='matplotlib').get_plot(**kwargs)
+        PDPlotter(self.pd, show_unstable=0, backend='matplotlib').get_plot(**kwargs)
         return plt
 
-
-    def get_stability_diagram(self,elements,size=None):
+    def get_stability_diagram(self, elements, size=None):
         """
         Method to get stability diagram with 'get_chempot_range_map_plot' method in pymatgen
 
@@ -948,12 +915,11 @@ class PDHandler:
         PDPlotter(pd).get_chempot_range_map_plot(elements)
         if size:
             fig = plt.gcf()
-            fig.set_size_inches(size[0],size[1])
-        
+            fig.set_size_inches(size[0], size[1])
+
         return plt
 
-
-    def get_stable_entry_from_comp(self,comp):
+    def get_stable_entry_from_comp(self, comp):
         """
         Get the PDEntry of the stable entry of a target composition
 
@@ -964,7 +930,7 @@ class PDHandler:
         -------
         Pymatgen PDEntry object
         """
-        target_entry=None
+        target_entry = None
         pd = self.pd
         for e in pd.stable_entries:
             if e.composition.reduced_composition == comp:
@@ -973,6 +939,4 @@ class PDHandler:
         if target_entry is not None:
             return target_entry
         else:
-            raise ValueError('No stable entry has been found for target composition:%s' %comp.reduced_formula)
-
-    
+            raise ValueError('No stable entry has been found for target composition:%s' % comp.reduced_formula)

@@ -481,7 +481,7 @@ class FermiDosCarriersInfo(Dos, MSONable):
             self.energies[:idx_fermi] -= (bandgap - (ecbm - evbm)) / 2.0
             self.energies[idx_fermi:] += (bandgap - (ecbm - evbm)) / 2.0
 
-    def get_doping(self, fermi_level,temperature,carriers_values=False):
+    def get_doping(self, fermi_level, temperature, carriers_values=False):
         """
         Calculate the doping (majority carrier concentration) at a given
         fermi level  and temperature. A simple Left Riemann sum is used for
@@ -504,10 +504,10 @@ class FermiDosCarriersInfo(Dos, MSONable):
             self.tdos[:self.idx_vbm + 1] *
             f0_holes(self.energies[:self.idx_vbm + 1], fermi_level, temperature)
             * self.de[:self.idx_vbm + 1], axis=0)
-        h = (vb_integral) / (self.volume * self.A_to_cm ** 3) 
-        n = -1*(cb_integral) / (self.volume * self.A_to_cm ** 3)
+        h = (vb_integral) / (self.volume * self.A_to_cm ** 3)
+        n = -1 * (cb_integral) / (self.volume * self.A_to_cm ** 3)
         if carriers_values:
-            return h , n
+            return h, n
         else:
             return h + n
 
@@ -618,7 +618,7 @@ class FermiDosCarriersInfo(Dos, MSONable):
         dos = Dos(d["efermi"], d["energies"],
                   {Spin(int(k)): v for k, v in d["densities"].items()})
         return FermiDosCarriersInfo(dos, structure=Structure.from_dict(d["structure"]),
-                        nelecs=d["nelecs"])
+                                    nelecs=d["nelecs"])
 
     def as_dict(self):
         """
@@ -1018,6 +1018,7 @@ def f0(E, fermi, T):
     """
     return 1. / (1. + np.exp((E - fermi) / (_cd("Boltzmann constant in eV/K") * T)))
 
+
 def f0_holes(E, fermi, T):
     """
     Returns 1-f0 (f0 = equilibrium fermi-dirac). Note that the exp is rewritten as (fermi -E).
@@ -1027,6 +1028,7 @@ def f0_holes(E, fermi, T):
         T (float): the temperature in kelvin
     """
     return 1. / (1. + np.exp((fermi - E) / (_cd("Boltzmann constant in eV/K") * T)))
+
 
 def _get_orb_type_lobster(orb):
     """

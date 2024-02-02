@@ -222,15 +222,15 @@ class StructureMotifInterstitial:
     """
 
     def __init__(
-        self,
-        struct,
-        inter_elem,
-        motif_types=("tetrahedral", "octahedral"),
-        op_threshs=(0.3, 0.5),
-        dl=0.2,
-        doverlap=1,
-        facmaxdl=1.01,
-        verbose=False,
+            self,
+            struct,
+            inter_elem,
+            motif_types=("tetrahedral", "octahedral"),
+            op_threshs=(0.3, 0.5),
+            dl=0.2,
+            doverlap=1,
+            facmaxdl=1.01,
+            verbose=False,
     ):
         """
         Generates symmetrically distinct interstitial sites at positions
@@ -556,15 +556,15 @@ class TopographyAnalyzer:
     """
 
     def __init__(
-        self,
-        structure,
-        framework_ions,
-        cations,
-        tol=0.0001,
-        max_cell_range=1,
-        check_volume=True,
-        constrained_c_frac=0.5,
-        thickness=0.5,
+            self,
+            structure,
+            framework_ions,
+            cations,
+            tol=0.0001,
+            max_cell_range=1,
+            check_volume=True,
+            constrained_c_frac=0.5,
+            thickness=0.5,
     ):
         """
         Init.
@@ -615,8 +615,8 @@ class TopographyAnalyzer:
         constrained_sites = []
         for i, site in enumerate(s):
             if (
-                site.frac_coords[2] >= constrained_c_frac - thickness
-                and site.frac_coords[2] <= constrained_c_frac + thickness
+                    site.frac_coords[2] >= constrained_c_frac - thickness
+                    and site.frac_coords[2] <= constrained_c_frac + thickness
             ):
                 constrained_sites.append(site)
         structure = Structure.from_sites(sites=constrained_sites)
@@ -1171,12 +1171,12 @@ class ChargeDensityAnalyzer(MSONable):
         return new_f_coords
 
     def get_structure_with_nodes(
-        self,
-        find_min=True,
-        min_dist=0.5,
-        tol=0.2,
-        threshold_frac=None,
-        threshold_abs=None,
+            self,
+            find_min=True,
+            min_dist=0.5,
+            tol=0.2,
+            threshold_frac=None,
+            threshold_abs=None,
     ):
         """
         Get the modified structure with the possible interstitial sites added.
@@ -1266,15 +1266,15 @@ class ChargeInsertionAnalyzer(ChargeDensityAnalyzer):
     """
 
     def __init__(
-        self,
-        chgcar,
-        working_ion="Li",
-        avg_radius=0.4,
-        max_avg_charge=1.0,
-        clustering_tol=0.6,
-        ltol=0.2,
-        stol=0.3,
-        angle_tol=5,
+            self,
+            chgcar,
+            working_ion="Li",
+            avg_radius=0.4,
+            max_avg_charge=1.0,
+            clustering_tol=0.6,
+            ltol=0.2,
+            stol=0.3,
+            angle_tol=5,
     ):
         """
         Args:
@@ -1354,7 +1354,7 @@ def generic_groupby(list_in, comp=operator.eq):
         if ls1 is not None:
             continue
         list_out[i1] = label_num
-        for i2, ls2 in list(enumerate(list_out))[(i1 + 1) :]:  # noqa
+        for i2, ls2 in list(enumerate(list_out))[(i1 + 1):]:  # noqa
             if comp(list_in[i1], list_in[i2]):
                 if list_out[i2] is None:
                     list_out[i2] = list_out[i1]

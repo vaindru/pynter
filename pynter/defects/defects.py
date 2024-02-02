@@ -13,15 +13,17 @@ import importlib
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 from pynter.tools.structure import is_site_in_structure, is_site_in_structure_coords, remove_oxidation_state_from_site
-# Adapted from pymatgen.analysis.defect.core 
 
 
-class Defect(MSONable,metaclass=ABCMeta): #MSONable contains as_dict and from_dict methods
+# Adapted from pymatgen.analysis.defect.core
+
+
+class Defect(MSONable, metaclass=ABCMeta):  # MSONable contains as_dict and from_dict methods
     """
     Abstract class for a single point defect
     """
 
-    def __init__(self, defect_site, bulk_structure, charge=None, multiplicity=None,label=None):
+    def __init__(self, defect_site, bulk_structure, charge=None, multiplicity=None, label=None):
         """
         Base class for defect objets
 
@@ -39,13 +41,12 @@ class Defect(MSONable,metaclass=ABCMeta): #MSONable contains as_dict and from_di
         self._defect_site = defect_site
         self._bulk_structure = bulk_structure
         self._charge = charge
-        self._multiplicity = multiplicity 
+        self._multiplicity = multiplicity
         self._label = label
 
-
     def __repr__(self):
-        return "{} : {} {}".format(self.defect_type,self.site.frac_coords, self.name.dspecie)
-    
+        return "{} : {} {}".format(self.defect_type, self.site.frac_coords, self.name.dspecie)
+
     def __print__(self):
         return self.__repr__()
 
@@ -55,14 +56,14 @@ class Defect(MSONable,metaclass=ABCMeta): #MSONable contains as_dict and from_di
         Structure without defects.
         """
         return self._bulk_structure
-    
+
     @property
     def charge(self):
         """
         Charge of the defect.
         """
         return self._charge
-     
+
     @abstractproperty
     def defect_composition(self):
         """
@@ -76,22 +77,22 @@ class Defect(MSONable,metaclass=ABCMeta): #MSONable contains as_dict and from_di
         Index of the defect site in the structure
         """
         return
-    
+
     @property
     def defect_specie(self):
         return self.name.dspecie
-    
+
     @property
     def defect_structure(self):
         """
         Structure of the defect
         """
-        return self.generate_defect_structure() 
-    
+        return self.generate_defect_structure()
+
     @property
     def defect_type(self):
         return self.__class__.__name__
-    
+
     @property
     def delta_atoms(self):
         """
@@ -102,7 +103,7 @@ class Defect(MSONable,metaclass=ABCMeta): #MSONable contains as_dict and from_di
 
     @abstractmethod
     def get_multiplicity(self):
-        return 
+        return
 
     @property
     def label(self):
@@ -114,8 +115,8 @@ class Defect(MSONable,metaclass=ABCMeta): #MSONable contains as_dict and from_di
         Multiplicity of a defect site within the structure
         """
         return self._multiplicity
-      
-    @abstractproperty  
+
+    @abstractproperty
     def name(self):
         """
         Name of the defect
@@ -128,12 +129,12 @@ class Defect(MSONable,metaclass=ABCMeta): #MSONable contains as_dict and from_di
         Defect position as a site object
         """
         return self._defect_site
-   
+
     @property
     def site_concentration_in_cm3(self):
-        return self.multiplicity * 1e24 / self.bulk_structure.volume 
-   
-    @property  
+        return self.multiplicity * 1e24 / self.bulk_structure.volume
+
+    @property
     def symbol(self):
         """
         Latex formatted name of the defect
@@ -145,14 +146,14 @@ class Defect(MSONable,metaclass=ABCMeta): #MSONable contains as_dict and from_di
         """
         Name in latex format with charge written as a number.
         """
-        return format_legend_with_charge_number(self.symbol,self.charge)
-    
+        return format_legend_with_charge_number(self.symbol, self.charge)
+
     @property
     def symbol_with_charge_kv(self):
         """
         Name in latex format with charge written with kroger and vink notation.
         """
-        return format_legend_with_charge_kv(self.symbol,self.charge)
+        return format_legend_with_charge_kv(self.symbol, self.charge)
 
     def set_charge(self, new_charge=0.0):
         """
@@ -160,8 +161,8 @@ class Defect(MSONable,metaclass=ABCMeta): #MSONable contains as_dict and from_di
         """
         self._charge = new_charge
         return
-    
-    def set_label(self,new_label):
+
+    def set_label(self, new_label):
         """
         Sets the label of the defect
         """
@@ -174,13 +175,13 @@ class Defect(MSONable,metaclass=ABCMeta): #MSONable contains as_dict and from_di
         """
         self._multiplicity = new_multiplicity
         return
-        
-        
+
+
 class Vacancy(Defect):
-    
     """
     Subclass of Defect for single vacancies.
     """
+
     @property
     def defect_composition(self):
         """
@@ -189,24 +190,24 @@ class Vacancy(Defect):
         temp_comp = self.bulk_structure.composition.as_dict()
         temp_comp[str(self.site.specie)] -= 1
         return Composition(temp_comp)
-    
+
     @property
     def defect_site_index(self):
         """
         Index of the defect site in the bulk structure
         """
-        _,index = is_site_in_structure_coords(self.site, self.bulk_structure)
+        _, index = is_site_in_structure_coords(self.site, self.bulk_structure)
         return index
-    
+
     @property
     def delta_atoms(self):
         """
         Dictionary with element symbol as keys and difference in particle number 
         between defect and bulk structure as values
         """
-        return {self.site.specie.symbol:-1}
-    
-    def generate_defect_structure(self,bulk_structure=None,defect_site_index=None):
+        return {self.site.specie.symbol: -1}
+
+    def generate_defect_structure(self, bulk_structure=None, defect_site_index=None):
         """
         Generate a structure containing the defect starting from a bulk structure.
 
@@ -228,8 +229,8 @@ class Vacancy(Defect):
         defect_structure = bulk_structure.copy()
         defect_structure.remove_sites([defect_site_index])
         return defect_structure
-    
-    def get_multiplicity(self,**kwargs):
+
+    def get_multiplicity(self, **kwargs):
         """
         Get multiplicity of the defect in the structure
 
@@ -238,7 +239,7 @@ class Vacancy(Defect):
         **kwargs : (dict)
             Arguments to pass to SpacegroupAnalyzer (symprec, angle_tolerance)
         """
-        sga = SpacegroupAnalyzer(self.bulk_structure,**kwargs)
+        sga = SpacegroupAnalyzer(self.bulk_structure, **kwargs)
         symmetrized_structure = sga.get_symmetrized_structure()
         equivalent_sites = symmetrized_structure.find_equivalent_sites(self.site)
         return len(equivalent_sites)
@@ -248,24 +249,23 @@ class Vacancy(Defect):
         """
         Name of the defect. Behaves like a string with additional attributes.
         """
-        return DefectName(self.defect_type,self.site.specie.symbol,None,self.label)
-        
-    
+        return DefectName(self.defect_type, self.site.specie.symbol, None, self.label)
+
+
 class Substitution(Defect):
     """
     Subclass of Defect for substitutional defects.
     """
 
-    def __init__(self,defect_site,bulk_structure,charge=None,multiplicity=None,label=None,site_in_bulk=None):
+    def __init__(self, defect_site, bulk_structure, charge=None, multiplicity=None, label=None, site_in_bulk=None):
         """
         site_in_bulk: (PeriodicSite)
             Original Site in bulk structure were substitution took place
         """
-        super().__init__(defect_site,bulk_structure,charge,multiplicity,label)  
+        super().__init__(defect_site, bulk_structure, charge, multiplicity, label)
         self._site_in_bulk = site_in_bulk if site_in_bulk else self.get_site_in_bulk()
 
-
-    @property  
+    @property
     def defect_composition(self):
         """
         Composition of the defect.
@@ -289,9 +289,9 @@ class Substitution(Defect):
         Dictionary with element symbol as keys and difference in particle number 
         between defect and bulk structure as values
         """
-        return {self.site.specie.symbol:1, self.site_in_bulk.specie.symbol:-1}
-    
-    def generate_defect_structure(self,bulk_structure=None,defect_site_index=None):
+        return {self.site.specie.symbol: 1, self.site_in_bulk.specie.symbol: -1}
+
+    def generate_defect_structure(self, bulk_structure=None, defect_site_index=None):
         """
         Generate a structure containing the defect starting from a bulk structure.
 
@@ -311,10 +311,10 @@ class Substitution(Defect):
         bulk_structure = bulk_structure if bulk_structure else self.bulk_structure
         defect_site_index = defect_site_index if defect_site_index else self.defect_site_index
         defect_structure = bulk_structure.copy()
-        defect_structure.replace(defect_site_index,self.defect_specie)  
+        defect_structure.replace(defect_site_index, self.defect_specie)
         return defect_structure
 
-    def get_multiplicity(self,**kwargs):
+    def get_multiplicity(self, **kwargs):
         """
         Get multiplicity of the defect in the structure
 
@@ -323,41 +323,40 @@ class Substitution(Defect):
         **kwargs : (dict)
             Arguments to pass to SpacegroupAnalyzer (symprec, angle_tolerance)
         """
-        sga = SpacegroupAnalyzer(self.bulk_structure,**kwargs)
+        sga = SpacegroupAnalyzer(self.bulk_structure, **kwargs)
         symmetrized_structure = sga.get_symmetrized_structure()
         equivalent_sites = symmetrized_structure.find_equivalent_sites(self.site_in_bulk)
         return len(equivalent_sites)
 
-    @property 
+    @property
     def name(self):
         """
         Name for this defect. Behaves like a string with additional attributes.
         """
-        return DefectName(self.defect_type,self.site.specie.symbol,self.site_in_bulk.specie.symbol,self.label)   
-    
+        return DefectName(self.defect_type, self.site.specie.symbol, self.site_in_bulk.specie.symbol, self.label)
+
     @property
     def site_in_bulk(self):
         return self._site_in_bulk
-    
+
     def get_site_in_bulk(self):
         try:
             site = min(
                 self.bulk_structure.get_sites_in_sphere(self.site.coords, 0.5, include_index=True),
-                           key=lambda x: x[1])  
+                key=lambda x: x[1])
             # there's a bug in pymatgen PeriodicNeighbour.from_dict and the specie attribute, get PeriodicSite instead
             site = PeriodicSite(site.species, site.frac_coords, site.lattice)
             return site
         except:
             return ValueError("""No equivalent site has been found in bulk, defect and bulk structures are too different.\
 Try using the unrelaxed defect structure or provide bulk site manually""")
-    
- 
-    
+
+
 class Interstitial(Defect):
     """
     Subclass of Defect for interstitial defects.
     """
-    
+
     @property
     def defect_composition(self):
         """
@@ -366,24 +365,24 @@ class Interstitial(Defect):
         temp_comp = self.bulk_structure.composition.as_dict()
         temp_comp[str(self.site.specie)] += 1
         return Composition(temp_comp)
-    
+
     @property
     def defect_site_index(self):
         """
         Index of the defect site in the defect structure
         """
-        is_site,index = is_site_in_structure(self.site, self.defect_structure)
+        is_site, index = is_site_in_structure(self.site, self.defect_structure)
         return index  # more flexibility with is_site_in_structure
-       
+
     @property
     def delta_atoms(self):
         """
         Dictionary with element symbol as keys and difference in particle number 
         between defect and bulk structure as values
         """
-        return {self.site.specie.symbol:1}
-    
-    def generate_defect_structure(self,bulk_structure=None):
+        return {self.site.specie.symbol: 1}
+
+    def generate_defect_structure(self, bulk_structure=None):
         """
         Generate a structure containing the defect starting from a bulk structure.
 
@@ -399,9 +398,8 @@ class Interstitial(Defect):
         """
         bulk_structure = bulk_structure if bulk_structure else self.bulk_structure
         defect_structure = bulk_structure.copy()
-        defect_structure.append(self.site.species,self.site.frac_coords)
+        defect_structure.append(self.site.species, self.site.frac_coords)
         return defect_structure
-        
 
     def get_multiplicity(self):
         raise NotImplementedError('Not implemented for Interstitial')
@@ -411,39 +409,38 @@ class Interstitial(Defect):
         """
         Name of the defect. Behaves like a string with additional attributes.
         """
-        return DefectName(self.defect_type,self.site.specie.symbol,None,self.label)
-        
-      
+        return DefectName(self.defect_type, self.site.specie.symbol, None, self.label)
+
+
 class Polaron(Defect):
     """
     Subclass of Defect for polarons
-    """   
-    
-    def __init__(self,defect_site,bulk_structure,charge=None,multiplicity=None,
-                 label=None,defect_structure=None):
+    """
+
+    def __init__(self, defect_site, bulk_structure, charge=None, multiplicity=None,
+                 label=None, defect_structure=None):
         """
         defect_structure: (Structure)
             Structure containing the polaron. If not provided the site index is searched 
             in the bulk structure, and the defect_structure is set equal to the bulk structure.
         """
-        super().__init__(defect_site,bulk_structure,charge,multiplicity,label) 
+        super().__init__(defect_site, bulk_structure, charge, multiplicity, label)
         self._defect_structure = defect_structure
-        
-        
+
     @property
     def defect_composition(self):
         """
         Composition of the defect
         """
         return self.bulk_structure.composition
-    
+
     @property
     def defect_site_index(self):
         """
         Index of the defect site in the structure
         """
         return self.defect_structure.index(self.site)
-        
+
     @property
     def delta_atoms(self):
         """
@@ -451,8 +448,8 @@ class Polaron(Defect):
         between defect and bulk structure as values
         """
         return {}
-    
-    def generate_defect_structure(self,bulk_structure=None):
+
+    def generate_defect_structure(self, bulk_structure=None):
         """
         Structure containing the polaron. If not provided the site index is searched 
         in the bulk structure, and the defect_structure is set equal to the bulk structure.
@@ -461,10 +458,9 @@ class Polaron(Defect):
             return self._defect_structure
         else:
             bulk_structure = bulk_structure if bulk_structure else self.bulk_structure
-            return bulk_structure  
-        
-        
-    def get_multiplicity(self,**kwargs):
+            return bulk_structure
+
+    def get_multiplicity(self, **kwargs):
         """
         Get multiplicity of the defect in the structure
 
@@ -473,7 +469,7 @@ class Polaron(Defect):
         **kwargs : (dict)
             Arguments to pass to SpacegroupAnalyzer (symprec, angle_tolerance)
         """
-        sga = SpacegroupAnalyzer(self.bulk_structure,**kwargs)
+        sga = SpacegroupAnalyzer(self.bulk_structure, **kwargs)
         symmetrized_structure = sga.get_symmetrized_structure()
         equivalent_sites = symmetrized_structure.find_equivalent_sites(self.site)
         return len(equivalent_sites)
@@ -483,13 +479,12 @@ class Polaron(Defect):
         """
         Name of the defect. Behaves like a string with additional attributes.
         """
-        return DefectName(self.defect_type,self.site.specie.symbol,None,self.label)
-  
-    
-    
-class DefectComplex(MSONable,metaclass=ABCMeta):
+        return DefectName(self.defect_type, self.site.specie.symbol, None, self.label)
 
-    def __init__(self,defects,bulk_structure,charge=None,multiplicity=None,label=None):
+
+class DefectComplex(MSONable, metaclass=ABCMeta):
+
+    def __init__(self, defects, bulk_structure, charge=None, multiplicity=None, label=None):
         """
         Class to describe defect complexes
 
@@ -510,22 +505,21 @@ class DefectComplex(MSONable,metaclass=ABCMeta):
         self._multiplicity = multiplicity
         self._label = label
 
-
     def __repr__(self):
         return "{} : {}".format(self.defect_type,
-        [(d.defect_type,d.name.dspecie,d.site.frac_coords.__str__()) 
-         for d in self.defects])
+                                [(d.defect_type, d.name.dspecie, d.site.frac_coords.__str__())
+                                 for d in self.defects])
 
     def __str__(self):
         return self.__repr__()
-    
+
     @property
     def bulk_structure(self):
         """
         Returns the structure without any defects.
         """
         return self._bulk_structure
-    
+
     @property
     def charge(self):
         """
@@ -543,7 +537,7 @@ class DefectComplex(MSONable,metaclass=ABCMeta):
     @property
     def defect_composition(self):
         return self.defect_structure.composition
-        
+
     @property
     def defect_names(self):
         return [d.name for d in self.defects]
@@ -555,7 +549,7 @@ class DefectComplex(MSONable,metaclass=ABCMeta):
     @property
     def defect_type(self):
         return self.__class__.__name__
-    
+
     @property
     def delta_atoms(self):
         """
@@ -570,10 +564,10 @@ class DefectComplex(MSONable,metaclass=ABCMeta):
             else:
                 for e in da_single:
                     prec = da_global[e] if e in da_global.keys() else 0
-                    da_global[e] = prec + da_single[e]       
-        return da_global 
+                    da_global[e] = prec + da_single[e]
+        return da_global
 
-    def generate_defect_structure(self,bulk_structure=None):
+    def generate_defect_structure(self, bulk_structure=None):
         """
         Generate a structure containing the defect starting from a bulk structure.
         If not provided self.bulk_structure is used.
@@ -604,16 +598,16 @@ class DefectComplex(MSONable,metaclass=ABCMeta):
         """
         Name of the defect. Behaves like a string with additional attributes.
         """
-        return DefectComplexName([d.name for d in self.defects],self.label)
+        return DefectComplexName([d.name for d in self.defects], self.label)
 
     @property
     def site_concentration_in_cm3(self):
-        return self.multiplicity * 1e24 / self.bulk_structure.volume 
-    
+        return self.multiplicity * 1e24 / self.bulk_structure.volume
+
     @property
     def sites(self):
         return [d.site for d in self.defects]
-    
+
     @property
     def symbol(self):
         return self.name.symbol
@@ -623,24 +617,23 @@ class DefectComplex(MSONable,metaclass=ABCMeta):
         """
         Name in latex format with charge written as a number.
         """
-        return format_legend_with_charge_number(self.symbol,self.charge)
-    
+        return format_legend_with_charge_number(self.symbol, self.charge)
+
     @property
     def symbol_with_charge_kv(self):
         """
         Name in latex format with charge written with kroger and vink notation.
         """
-        return format_legend_with_charge_kv(self.symbol,self.charge)
-
+        return format_legend_with_charge_kv(self.symbol, self.charge)
 
     def set_charge(self, new_charge):
         """
         Sets the charge of the defect.
         """
         self._charge = new_charge
-        return    
+        return
 
-    def set_label(self,new_label):
+    def set_label(self, new_label):
         """
         Sets the label of the defect
         """
@@ -653,35 +646,35 @@ class DefectComplex(MSONable,metaclass=ABCMeta):
         """
         self._multiplicity = new_multiplicity
         return
-    
 
-class DefectName(str,MSONable):
-    
-    def __new__(cls, dtype,dspecie,bulk_specie=None,label=None):
+
+class DefectName(str, MSONable):
+
+    def __new__(cls, dtype, dspecie, bulk_specie=None, label=None):
         if dtype == 'Vacancy':
-            name = 'Vac_%s' %dspecie
-            symbol = '$V_{%s}$' %dspecie
-            
+            name = 'Vac_%s' % dspecie
+            symbol = '$V_{%s}$' % dspecie
+
         elif dtype == 'Substitution':
-            name = 'Sub_%s_on_%s' %(dspecie,bulk_specie)
-            symbol = '$%s_{%s}$' %(dspecie,bulk_specie)
-            
+            name = 'Sub_%s_on_%s' % (dspecie, bulk_specie)
+            symbol = '$%s_{%s}$' % (dspecie, bulk_specie)
+
         elif dtype == 'Interstitial':
-            name = 'Int_%s' %dspecie
-            symbol = '$%s_{i}$' %dspecie
-            
+            name = 'Int_%s' % dspecie
+            symbol = '$%s_{i}$' % dspecie
+
         elif dtype == 'Polaron':
-            name = 'Pol_%s' %dspecie
-            symbol = '$%s_{%s}$' %(dspecie,dspecie)
-            
+            name = 'Pol_%s' % dspecie
+            symbol = '$%s_{%s}$' % (dspecie, dspecie)
+
         if label:
-            fullname = name +'(%s)'%label
-            symbol = symbol +'(%s)'%label
+            fullname = name + '(%s)' % label
+            symbol = symbol + '(%s)' % label
         else:
             fullname = name
-        
-        #get str instance
-        instance = super().__new__(cls,fullname) 
+
+        # get str instance
+        instance = super().__new__(cls, fullname)
         instance._dtype = dtype
         instance._dspecie = dspecie
         instance._bulk_specie = bulk_specie
@@ -689,11 +682,10 @@ class DefectName(str,MSONable):
         instance._label = label
         instance._fullname = fullname
         instance._symbol = symbol
-        
+
         return instance
 
-
-    def __init__(self,dtype,dspecie,bulk_specie=None,label=None):
+    def __init__(self, dtype, dspecie, bulk_specie=None, label=None):
         """
         Class to systematically organize the name of a defect.
         Behaves like a string, with the additional attributes.
@@ -709,17 +701,16 @@ class DefectName(str,MSONable):
         label : (str), optional
             Label for the defect. Will be displayed in parenthesis after the name. The default is None.
         """
-        super().__init__() # init string
-
+        super().__init__()  # init string
 
     def __str__(self):
         return self.fullname.__str__()
-    
+
     def __repr__(self):
         return self.fullname.__repr__()
-    
+
     def __iter__(self):
-        return [self].__iter__() # dummy iter to handle single defecs and complexes the same way 
+        return [self].__iter__()  # dummy iter to handle single defecs and complexes the same way
 
     def __eq__(self, other):
         if isinstance(other, str):
@@ -732,7 +723,7 @@ class DefectName(str,MSONable):
     def __hash__(self):
         return hash(self.fullname)
 
-    @property    
+    @property
     def bulk_specie(self):
         if hasattr(self, '_bulk_specie'):
             bulk_specie = self._bulk_specie
@@ -740,7 +731,7 @@ class DefectName(str,MSONable):
             bulk_specie = None
         return bulk_specie
 
-    @property        
+    @property
     def dspecie(self):
         return self._dspecie
 
@@ -763,57 +754,56 @@ class DefectName(str,MSONable):
     @property
     def symbol(self):
         return self._symbol
-    
-    
+
     @staticmethod
     def from_string(string):
         args = DefectName._get_args_from_string(string)
         return DefectName(*args)
-          
+
     def _get_args_from_string(string):
         if '(' in string:
-            name,label = string.split('(')
+            name, label = string.split('(')
             label = label.strip(')')
         else:
             name = string
-            label=None
+            label = None
         nsplit = name.split('_')
         ntype = nsplit[0]
         el = nsplit[1]
         bulk_specie = None
-        if ntype=='Vac':
+        if ntype == 'Vac':
             dtype = 'Vacancy'
             dspecie = el
-        elif ntype=='Int':
+        elif ntype == 'Int':
             dtype = 'Interstitial'
             dspecie = el
-        elif ntype=='Sub':
+        elif ntype == 'Sub':
             dtype = 'Substitution'
             dspecie = el
             el_bulk = nsplit[3]
             bulk_specie = el_bulk
-        elif ntype=='Pol':
+        elif ntype == 'Pol':
             dtype = 'Polaron'
             dspecie = el
-        return dtype,dspecie,bulk_specie,label
-            
-            
-class DefectComplexName(str,MSONable):
-    
+        return dtype, dspecie, bulk_specie, label
+
+
+class DefectComplexName(str, MSONable):
+
     def __new__(cls, defect_names, label=None):
-        name = '-'.join([n.name for n in defect_names]) #exclude labels
+        name = '-'.join([n.name for n in defect_names])  # exclude labels
         if label:
-            fullname =  name + '(%s)'%label
+            fullname = name + '(%s)' % label
         else:
             fullname = name
-        instance = super().__new__(cls,fullname)        
+        instance = super().__new__(cls, fullname)
         instance._name = name
         instance._label = label
         instance._fullname = fullname
         instance._defect_names = defect_names
         return instance
-    
-    def __init__(self,defect_names,label=None):
+
+    def __init__(self, defect_names, label=None):
         """
         Class to systematically organize the name of a defect complex. The name of the 
         complex concatenates with '-' the names of the single defects.
@@ -827,14 +817,13 @@ class DefectComplexName(str,MSONable):
             Label for the defect. Will be displayed in parenthesis after the name. The default is None.
         """
         super().__init__()
-        
-                
+
     def __str__(self):
         return self.fullname.__str__()
-    
+
     def __repr__(self):
         return self.fullname.__repr__()
-    
+
     def __iter__(self):
         return self.defect_names.__iter__()
 
@@ -856,11 +845,11 @@ class DefectComplexName(str,MSONable):
     @property
     def dspecies(self):
         return [n.dspecie for n in self.defect_names]
-    
+
     @property
     def dtype(self):
         return 'DefectComplex'
-        
+
     @property
     def fullname(self):
         return self._fullname
@@ -872,30 +861,29 @@ class DefectComplexName(str,MSONable):
     @property
     def name(self):
         return self._name
-    
+
     @property
     def symbol(self):
-        symbol = '-'.join([n.symbol.split('(')[0] for n in self.defect_names]) 
+        symbol = '-'.join([n.symbol.split('(')[0] for n in self.defect_names])
         if self.label:
-            symbol = symbol + '(%s)'%self.label 
+            symbol = symbol + '(%s)' % self.label
         return symbol
-    
-    
+
     @staticmethod
     def from_string(string):
         args = DefectComplexName._get_args_from_string(string)
         return DefectComplexName(*args)
-    
+
     def _get_args_from_string(string):
         if '(' in string:
-            name,label = string.split('(')
+            name, label = string.split('(')
             label = label.strip(')')
         else:
             name = string
-            label=None
+            label = None
         names = name.split('-')
         defect_names = [DefectName.from_string(n) for n in names]
-        return defect_names,label
+        return defect_names, label
 
 
 def get_defect_name_from_string(string):
@@ -905,7 +893,7 @@ def get_defect_name_from_string(string):
         return DefectName.from_string(string)
 
 
-def create_interstitials(structure,elements,supercell_size=None,**kwargs):
+def create_interstitials(structure, elements, supercell_size=None, **kwargs):
     """
     Create Interstitial objects based on Voronoi with pymatgen. 
 
@@ -933,22 +921,22 @@ def create_interstitials(structure,elements,supercell_size=None,**kwargs):
         List of Interstitial objects
     """
     from pymatgen.analysis.defects.generators import VoronoiInterstitialGenerator
-    
+
     defects = []
     bulk_structure = structure.copy()
     if supercell_size:
         bulk_structure.make_supercell(supercell_size)
-    generator = VoronoiInterstitialGenerator().generate(bulk_structure,elements)
+    generator = VoronoiInterstitialGenerator().generate(bulk_structure, elements)
     for inter in generator:
         bulk_structure.remove_oxidation_states()
         remove_oxidation_state_from_site(inter.site)
-        interstitial = Interstitial(inter.site, bulk_structure,multiplicity=inter.multiplicity,
+        interstitial = Interstitial(inter.site, bulk_structure, multiplicity=inter.multiplicity,
                                     label=f'mult{inter.multiplicity}')
         defects.append(interstitial)
     return defects
 
 
-def create_substitutions(structure,elements_to_replace,supercell_size=None,site_indexes=None):
+def create_substitutions(structure, elements_to_replace, supercell_size=None, site_indexes=None):
     """
     Create Substitution objects starting from a bulk structure (unit cell or supercell).
 
@@ -970,7 +958,7 @@ def create_substitutions(structure,elements_to_replace,supercell_size=None,site_
     defects : (list)
         List of Substitution objects
     """
-    defects = [] 
+    defects = []
     bulk_structure = structure.copy()
     if supercell_size:
         bulk_structure.make_supercell(supercell_size)
@@ -978,17 +966,17 @@ def create_substitutions(structure,elements_to_replace,supercell_size=None,site_
         sites = [bulk_structure[i] for i in site_indexes]
     else:
         sites = bulk_structure.sites
-    for el_to_sub,el_subbed in elements_to_replace.items():
+    for el_to_sub, el_subbed in elements_to_replace.items():
         for site in sites:
             if site.specie.symbol == el_to_sub:
-                defect_site = PeriodicSite(el_subbed,site.frac_coords,site.lattice)
-                defects.append(Substitution(defect_site, bulk_structure,site_in_bulk=site))
+                defect_site = PeriodicSite(el_subbed, site.frac_coords, site.lattice)
+                defects.append(Substitution(defect_site, bulk_structure, site_in_bulk=site))
                 if not site_indexes:
                     break
-    return defects   
+    return defects
 
 
-def create_vacancies(structure,elements=None,supercell_size=None,site_indexes=None):
+def create_vacancies(structure, elements=None, supercell_size=None, site_indexes=None):
     """
     Create structures with vacancies starting from a bulk structure (unit cell or supercell).
 
@@ -1029,10 +1017,10 @@ def create_vacancies(structure,elements=None,supercell_size=None,site_indexes=No
                     defects.append(vacancy)
                     if not site_indexes:
                         break
-    return defects        
+    return defects
 
 
-def format_legend_with_charge_number(label,charge):
+def format_legend_with_charge_number(label, charge):
     """
     Get label in latex format with charge written as a number.
    
@@ -1046,7 +1034,7 @@ def format_legend_with_charge_number(label,charge):
     s = label
     charge = int(charge)
     if charge > 0:
-        q = '+'+str(charge)
+        q = '+' + str(charge)
     elif charge == 0:
         q = '\;' + str(charge)
     else:
@@ -1054,7 +1042,7 @@ def format_legend_with_charge_number(label,charge):
     return s + '$^{' + q + '}$'
 
 
-def format_legend_with_charge_kv(label,charge):
+def format_legend_with_charge_kv(label, charge):
     """
     Get label in latex format with charge written with kroger and vink notation.
 
@@ -1068,7 +1056,7 @@ def format_legend_with_charge_kv(label,charge):
     mod_label = label + '$'
     charge = int(charge)
     if charge < 0:
-        for i in range(0,abs(charge)):
+        for i in range(0, abs(charge)):
             if i == 0:
                 mod_label = mod_label + "^{"
             mod_label = mod_label + "'"
@@ -1076,18 +1064,18 @@ def format_legend_with_charge_kv(label,charge):
     elif charge == 0:
         mod_label = mod_label + "^{x}"
     elif charge > 0:
-        for i in range(0,charge):
+        for i in range(0, charge):
             if i == 0:
                 mod_label = mod_label + "^{"
             mod_label = mod_label + "°"
         mod_label = mod_label + "}"
-    
+
     mod_label = mod_label + "$"
-    
+
     return mod_label
 
-    
-def get_delta_atoms(structure_defect,structure_bulk):
+
+def get_delta_atoms(structure_defect, structure_bulk):
     """
     Function to build delta_atoms dictionary starting from Pymatgen Structure objects.
     ----------
@@ -1102,11 +1090,11 @@ def get_delta_atoms(structure_defect,structure_bulk):
     """
     comp_defect = structure_defect.composition
     comp_bulk = structure_bulk.composition
-        
+
     return get_delta_atoms_from_comp(comp_defect, comp_bulk)
 
 
-def get_delta_atoms_from_comp(comp_defect,comp_bulk):
+def get_delta_atoms_from_comp(comp_defect, comp_bulk):
     """
     Function to biuld delta_atoms dictionary starting from Pymatgen Structure objects.
     ----------
@@ -1120,34 +1108,34 @@ def get_delta_atoms_from_comp(comp_defect,comp_bulk):
         Dictionary with Element as keys and delta n as values.
     """
     delta_atoms = {}
-    for el,n in comp_defect.items():
+    for el, n in comp_defect.items():
         nsites_defect = n
         nsites_bulk = comp_bulk[el] if el in comp_bulk.keys() else 0
         delta_n = nsites_defect - nsites_bulk
         if delta_n != 0:
             delta_atoms[el] = delta_n
-        
-    return delta_atoms    
-    
+
+    return delta_atoms
+
 
 def get_old_pmg_object(defect):
     """
     Convert defect object to the old version of pymatgen defect object.
     """
     module = importlib.import_module("pynter.defects.pmg.pmg_defects_core")
-    pmg_class = getattr(module,defect.defect_type)
+    pmg_class = getattr(module, defect.defect_type)
     charge = defect.charge if defect.charge else 0
-    pmg_object = pmg_class(structure=defect.bulk_structure,defect_site=defect.site,
-                           charge=charge,multiplicity=defect.multiplicity)
+    pmg_object = pmg_class(structure=defect.bulk_structure, defect_site=defect.site,
+                           charge=charge, multiplicity=defect.multiplicity)
     return pmg_object
+
 
 def get_pmg_object(defect):
     """
     Convert defect object to pymatgen defect object.
     """
     module = importlib.import_module("pymatgen.analysis.defects.core")
-    pmg_class = getattr(module,defect.defect_type)
-    pmg_object = pmg_class(structure=defect.bulk_structure,site=defect.site,
+    pmg_class = getattr(module, defect.defect_type)
+    pmg_object = pmg_class(structure=defect.bulk_structure, site=defect.site,
                            multiplicity=defect.multiplicity)
     return pmg_object
-    

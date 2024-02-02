@@ -2,19 +2,19 @@
 
 from pymatgen.ext.matproj import MPRester
 
-from pynter import  get_cfgfile
+from pynter import get_cfgfile
 from pynter import SETTINGS
 
 try:
     API_KEY = SETTINGS['API_KEY']
 except:
     cfgfile = get_cfgfile()
-    raise KeyError('"API_KEY" needs to be present in the %s file' %cfgfile)
+    raise KeyError('"API_KEY" needs to be present in the %s file' % cfgfile)
 
 
 class MPDatabase:
-    
-    def __init__(self,mp_id=None):
+
+    def __init__(self, mp_id=None):
         """
         Class to retrieve data from Materials Project database
 
@@ -23,16 +23,15 @@ class MPDatabase:
         mp_id : (str), optional
             Materials-ID. The default is None.
         """
-        
+
         self.mp_id = mp_id if mp_id else None
         self.api_key = API_KEY
-    
+
     @property
     def mp_rester(self):
         return MPRester(API_KEY)
-        
-        
-    def get_data(self,data_type='vasp'):    
+
+    def get_data(self, data_type='vasp'):
         """
         Flexible method to get any data using the Materials Project REST
         interface. Generally used by other methods for more specific queries.
@@ -54,13 +53,12 @@ class MPDatabase:
             List of dictionaries with available MP data
         """
         with MPRester(API_KEY) as mpr:
-            data = mpr.get_data(self.mp_id,data_type=data_type) 
-        
+            data = mpr.get_data(self.mp_id, data_type=data_type)
+
         return data
 
-
-    def get_entries(self,chemsys_formula_id_criteria,compatible_only=True,inc_structure='initial',
-                    property_data=None,conventional_unit_cell=False,sort_by_e_above_hull=True):
+    def get_entries(self, chemsys_formula_id_criteria, compatible_only=True, inc_structure='initial',
+                    property_data=None, conventional_unit_cell=False, sort_by_e_above_hull=True):
         """
         Get a list of ComputedEntries or ComputedStructureEntries corresponding
         to a chemical system, formula, or materials_id or full criteria.
@@ -93,13 +91,12 @@ class MPDatabase:
             List of ComputedEntry or ComputedStructureEntry objects.
         """
         with MPRester(API_KEY) as mpr:
-            entries = mpr.get_entries(chemsys_formula_id_criteria,compatible_only,inc_structure,
-                                   property_data,conventional_unit_cell,sort_by_e_above_hull)
+            entries = mpr.get_entries(chemsys_formula_id_criteria, compatible_only, inc_structure,
+                                      property_data, conventional_unit_cell, sort_by_e_above_hull)
         return entries
-    
-    
-    def get_entries_from_compositions(self,compositions,lowest_e_above_hull=False,compatible_only=True,
-                                      inc_structure='initial',property_data=None,
+
+    def get_entries_from_compositions(self, compositions, lowest_e_above_hull=False, compatible_only=True,
+                                      inc_structure='initial', property_data=None,
                                       conventional_unit_cell=False):
         """
         Get a dictionary with compositions (strings) as keys and a list of ComputedEntries 
@@ -136,16 +133,15 @@ class MPDatabase:
         """
         entries_dict = {}
         for comp in compositions:
-            entries = self.get_entries(comp,compatible_only,inc_structure,property_data,
-                                                  conventional_unit_cell,sort_by_e_above_hull=True)
+            entries = self.get_entries(comp, compatible_only, inc_structure, property_data,
+                                       conventional_unit_cell, sort_by_e_above_hull=True)
             if lowest_e_above_hull:
-                entries_dict[comp] = entries[0] # sorted by e_above_hull
+                entries_dict[comp] = entries[0]  # sorted by e_above_hull
             else:
                 entries_dict[comp] = entries
         return entries_dict
-    
 
-    def get_structure(self,final=False,conventional_unit_cell=False):
+    def get_structure(self, final=False, conventional_unit_cell=False):
         """
         Get a Structure corresponding to a material_id.
 
@@ -162,13 +158,6 @@ class MPDatabase:
             Structure object.
         """
         with MPRester(API_KEY) as mpr:
-            structure = mpr.get_structure_by_material_id(self.mp_id,final=final,conventional_unit_cell=conventional_unit_cell).get_sorted_structure()
+            structure = mpr.get_structure_by_material_id(self.mp_id, final=final,
+                                                         conventional_unit_cell=conventional_unit_cell).get_sorted_structure()
         return structure
-
-    
-    
-    
-    
-    
-    
-    

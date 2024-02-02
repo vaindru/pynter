@@ -23,10 +23,10 @@ def get_charge_from_computed_entry(entry):
         val = {}
         for p in potcar:
             val[p.element] = p.nelectrons
-        neutral = sum([ val[el.symbol]*coeff 
-                       for el,coeff in entry.structure.composition.items()])
+        neutral = sum([val[el.symbol] * coeff
+                       for el, coeff in entry.structure.composition.items()])
         charge = neutral - nelect
-    if not isinstance(charge,int):
-        charge = np.around(charge,decimals=1)
-        
+    if not isinstance(charge, int):
+        charge = np.around(charge, decimals=1)
+
     return charge

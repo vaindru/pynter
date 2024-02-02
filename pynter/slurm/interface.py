@@ -1,16 +1,14 @@
-
 import os.path as op
 from shutil import which
 
 from monty.dev import requires
 
 from pynter import run_local, SETTINGS
-    
+
 
 class HPCInterface:
-    
-    
-    def __init__(self,config=None):
+
+    def __init__(self, config=None):
         """
         Class to interface commands with HPC
 
@@ -21,12 +19,11 @@ class HPCInterface:
         """
         if not config:
             config = SETTINGS['HPC']
-        
-        for key,value in config.items():
-            setattr(self, key, value)      
 
+        for key, value in config.items():
+            setattr(self, key, value)
 
-    def cancel_jobs(self,*args,printout=True,dry_run=False,**kwargs):
+    def cancel_jobs(self, *args, printout=True, dry_run=False, **kwargs):
         """
         Cancel jobs on HPC using scancel
 
@@ -44,15 +41,13 @@ class HPCInterface:
         cmd = 'scancel '
         for arg in args:
             cmd += arg + ' '
-                
-        stdout,stderr = self.command(cmd,printout,dry_run,**kwargs)
-        return stdout,stderr
 
+        stdout, stderr = self.command(cmd, printout, dry_run, **kwargs)
+        return stdout, stderr
 
     @requires(which("sshpass"),
-              "sshpass needs to be installed, you can install it with 'sudo apt-get install sshpass'.")   
-    
-    def command(self,cmd,printout=True,dry_run=False,**kwargs):   
+              "sshpass needs to be installed, you can install it with 'sudo apt-get install sshpass'.")
+    def command(self, cmd, printout=True, dry_run=False, **kwargs):
         """
         Run command on HPC
 
@@ -74,20 +69,19 @@ class HPCInterface:
         stderr : (str)
             Error.
         """
-        
+
         cmd_split = cmd.split()
         arg = ''
         for c in cmd_split:
-            arg += '"%s" ' %c
-         
-        command = 'sshpass ssh %s %s' %(self.hostname, arg)
+            arg += '"%s" ' % c
+
+        command = 'sshpass ssh %s %s' % (self.hostname, arg)
         if printout:
             print(f'{self.hostname}: {cmd} \n')
-        stdout,stderr = run_local(command,printout,dry_run,**kwargs)
-        return stdout,stderr
-                
+        stdout, stderr = run_local(command, printout, dry_run, **kwargs)
+        return stdout, stderr
 
-    def mkdir(self,path,printout=True,dry_run=False,**kwargs):
+    def mkdir(self, path, printout=True, dry_run=False, **kwargs):
         """
         Make new directory in HPC if doesn't exist
 
@@ -109,12 +103,11 @@ class HPCInterface:
         stderr : (str)
             Error.
         """
-        cmd = 'mkdir -p %s' %path
-        stdout,stderr = self.command(cmd,printout,dry_run,**kwargs)
+        cmd = 'mkdir -p %s' % path
+        stdout, stderr = self.command(cmd, printout, dry_run, **kwargs)
         return stdout, stderr
-        
-        
-    def qstat(self,cmd='squeue -o "%.10i %.9P %.40j %.8u %.2t %.10M %.5D %R"',printout=True,dry_run=False,**kwargs):
+
+    def qstat(self, cmd='squeue -o "%.10i %.9P %.40j %.8u %.2t %.10M %.5D %R"', printout=True, dry_run=False, **kwargs):
         """
         Check queue status on HPC
 
@@ -136,15 +129,13 @@ class HPCInterface:
         stderr : (str)
             Error.
         """
-        
-        stdout,stderr = self.command(cmd,printout,dry_run,**kwargs)
+
+        stdout, stderr = self.command(cmd, printout, dry_run, **kwargs)
         return stdout, stderr
-    
-    
+
     @requires(which("rsync"),
-          "rsync needs to be installed, you can install it with 'sudo apt-get install rsync'.")
-    
-    def rsync_from_hpc(self,remotedir=None,localdir=None,exclude=None,printout=True,dry_run=False,**kwargs):
+              "rsync needs to be installed, you can install it with 'sudo apt-get install rsync'.")
+    def rsync_from_hpc(self, remotedir=None, localdir=None, exclude=None, printout=True, dry_run=False, **kwargs):
         """
         Sync folders from HPC to local machine. The command "rsync" is used. With this function all
         the folders contained in the remote dir are synched to the local dir.
@@ -168,32 +159,30 @@ class HPCInterface:
             Output.
         stderr : (str)
             Error.
-        """        
+        """
         remotedir = remotedir if remotedir else self.workdir
         localdir = localdir if localdir else self.localdir
         localdir = op.abspath(localdir)
-        remotedir = op.join(remotedir,'')  #ensure backslash at the end
-        localdir = op.join(localdir,'')
-        
-        localcmd = 'mkdir -p %s' %localdir
+        remotedir = op.join(remotedir, '')  # ensure backslash at the end
+        localdir = op.join(localdir, '')
+
+        localcmd = 'mkdir -p %s' % localdir
         run_local(localcmd)
-        
-        cmd = "rsync -r -uavzh " #keep the spaces
+
+        cmd = "rsync -r -uavzh "  # keep the spaces
         if dry_run:
             cmd += "--dry-run "
         if exclude:
             for s in exclude:
-                cmd += f'--exclude={s} ' 
+                cmd += f'--exclude={s} '
         cmd += f"-e ssh {self.hostname}:{remotedir} {localdir} "
 
-        stdout,stderr = run_local(cmd,printout=printout,dry_run=False,**kwargs)
-        return stdout,stderr
-
+        stdout, stderr = run_local(cmd, printout=printout, dry_run=False, **kwargs)
+        return stdout, stderr
 
     @requires(which("rsync"),
-          "rsync needs to be installed, you can install it with 'sudo apt-get install rsync'.")
-    
-    def rsync_to_hpc(self,localdir=None,remotedir=None,exclude=None,printout=True,dry_run=False,**kwargs):
+              "rsync needs to be installed, you can install it with 'sudo apt-get install rsync'.")
+    def rsync_to_hpc(self, localdir=None, remotedir=None, exclude=None, printout=True, dry_run=False, **kwargs):
         """
         Sync folders from local machine to HPC. The command "rsync" is used. With this function all
         the folders contained in the local dir are synched to the remote dir.
@@ -217,32 +206,30 @@ class HPCInterface:
             Output.
         stderr : (str)
             Error.
-        """        
-        localdir = localdir if localdir else self.localdir 
+        """
+        localdir = localdir if localdir else self.localdir
         remotedir = remotedir if remotedir else self.workdir
         localdir = op.abspath(localdir)
-        localdir = op.join(localdir,'')  #ensure backslash at the end
-        remotedir = op.join(remotedir,'')
-        
-        self.mkdir(remotedir,printout=False)
-        
-        cmd = "rsync -r -uavzh " #keep the spaces
+        localdir = op.join(localdir, '')  # ensure backslash at the end
+        remotedir = op.join(remotedir, '')
+
+        self.mkdir(remotedir, printout=False)
+
+        cmd = "rsync -r -uavzh "  # keep the spaces
         if dry_run:
             cmd += "--dry-run "
         if exclude:
             for s in exclude:
                 cmd += f'--exclude={s} '
         cmd += f"-e ssh  {localdir} {self.hostname}:{remotedir} "
-        
-        stdout,stderr = run_local(cmd,printout=printout,dry_run=False,**kwargs)
 
-        return stdout,stderr
-    
-    
+        stdout, stderr = run_local(cmd, printout=printout, dry_run=False, **kwargs)
+
+        return stdout, stderr
+
     @requires(which("sshpass"),
-              "sshpass needs to be installed, you can install it with 'sudo apt-get install sshpass'.")      
-    
-    def sbatch(self,path='',job_script_filename='job.sh',printout=True,dry_run=False,**kwargs):
+              "sshpass needs to be installed, you can install it with 'sudo apt-get install sshpass'.")
+    def sbatch(self, path='', job_script_filename='job.sh', printout=True, dry_run=False, **kwargs):
         """
         Execute "sbatch" command on HPC to run job.
 
@@ -263,13 +250,10 @@ class HPCInterface:
             Output.
         stderr : (str)
             Error.
-        """    
-        path = op.join(self.workdir,path)
+        """
+        path = op.join(self.workdir, path)
         cmd = f'cd {path} ; sbatch {job_script_filename}'
         command = f'sshpass ssh {self.hostname} ' + cmd
-        stdout,stderr = run_local(command,printout,dry_run,**kwargs) # I've used the run local because there was a probelm with the multiple command given with ;
-        return stdout,stderr               # to check again if possible
-        
-        
-        
-        
+        stdout, stderr = run_local(command, printout, dry_run,
+                                   **kwargs)  # I've used the run local because there was a probelm with the multiple command given with ;
+        return stdout, stderr  # to check again if possible

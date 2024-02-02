@@ -17,7 +17,8 @@ from pymatgen.core.periodic_table import Element
 from pymatgen.core.composition import Composition
 from pymatgen.core.trajectory import Trajectory
 
-def _get_distance_vector_and_image(lattice,frac_coords1,frac_coords2,jimage=None):
+
+def _get_distance_vector_and_image(lattice, frac_coords1, frac_coords2, jimage=None):
     """
     Same as pymatgen.core.Lattice.get_distance_and_image but returns 
     the distance vetor instead of the norm.
@@ -52,7 +53,7 @@ def _get_distance_vector_and_image(lattice,frac_coords1,frac_coords2,jimage=None
     return mapped_vec, jimage  # type: ignore
 
 
-def get_distance_vector(site1,site2,jimage=None):
+def get_distance_vector(site1, site2, jimage=None):
     """
     Get distance vector between two sites assuming periodic boundary conditions.
     Same as pymatgen.core.sites.Site.distance but returns a vector instead of norm.
@@ -65,10 +66,10 @@ def get_distance_vector(site1,site2,jimage=None):
     Returns:
         distance (float): Distance between the two sites
     """
-    return _get_distance_vector_and_image(site1.lattice, site1.frac_coords, site2.frac_coords,jimage=jimage)[0]
+    return _get_distance_vector_and_image(site1.lattice, site1.frac_coords, site2.frac_coords, jimage=jimage)[0]
 
 
-def get_displacement_vectors(structure1,structure2):
+def get_displacement_vectors(structure1, structure2):
     """
     Get vectors in cartesian coords of site displacements of structure2 w.r.t. structure 1
 
@@ -84,13 +85,14 @@ def get_displacement_vectors(structure1,structure2):
     (numpy ndarray)
         Displacement vectors in cartesian coordinates.
     """
-    traj = Trajectory.from_structures([structure1,structure2],constant_lattice=True) #order of structures determines ref in traj
+    traj = Trajectory.from_structures([structure1, structure2],
+                                      constant_lattice=True)  # order of structures determines ref in traj
     traj.to_displacements()
     disp = traj.frac_coords[1]
     return structure1.lattice.get_cartesian_coords(disp)
 
 
-def is_site_in_structure(site,structure,tol=1e-03):
+def is_site_in_structure(site, structure, tol=1e-03):
     """
     Check if Site is part of the Structure list. This function is needed because 
     sometimes doing a simple check ("site in structure") doesn't work. This function performes
@@ -112,17 +114,17 @@ def is_site_in_structure(site,structure,tol=1e-03):
         Index of site in structure in case site is_site_in_structure returns True
         If False index will be None.
     """
-    is_site_in_structure,index = False,None
-    check,index = is_site_in_structure_coords(site, structure,tol=tol)
+    is_site_in_structure, index = False, None
+    check, index = is_site_in_structure_coords(site, structure, tol=tol)
     if check:
         s = structure[index]
         if site.specie.symbol == s.specie.symbol:
-            is_site_in_structure =True
-    
-    return is_site_in_structure,index
+            is_site_in_structure = True
+
+    return is_site_in_structure, index
 
 
-def is_site_in_structure_coords(site,structure,tol=1e-03):
+def is_site_in_structure_coords(site, structure, tol=1e-03):
     """
     Check if Site coordinates are prensent in the Structure. Calculates distance between target site and 
     each site in reference structure, takes the minimum value and returns True if is within a tolerance.
@@ -148,18 +150,18 @@ def is_site_in_structure_coords(site,structure,tol=1e-03):
         If False index will be None.
     """
     l = site.lattice
-    tol = np.sqrt(l.a**2 + l.b**2 + l.c**2) * tol #input is normalized with respect to lattice vector
-    distances=[]
+    tol = np.sqrt(l.a ** 2 + l.b ** 2 + l.c ** 2) * tol  # input is normalized with respect to lattice vector
+    distances = []
     for s in structure:
         distances.append(s.distance(site))
-    
+
     distance_min = min(distances)
     if distance_min < tol:
         i_min = distances.index(distance_min)
         index = structure.index(structure[i_min])
         return True, index
     else:
-        return False,None
+        return False, None
 
 
 def remove_oxidation_state_from_site(site):
@@ -173,7 +175,8 @@ def remove_oxidation_state_from_site(site):
     site.species = Composition(new_sp)
     return
 
-def sort_sites_to_ref_coords(structure,structure_ref,extra_sites=[],tol=1e-03,get_indexes=False):
+
+def sort_sites_to_ref_coords(structure, structure_ref, extra_sites=[], tol=1e-03, get_indexes=False):
     """
     Sort Sites of one structure to match the order of coordinates in a reference structure. 
 
@@ -203,18 +206,18 @@ def sort_sites_to_ref_coords(structure,structure_ref,extra_sites=[],tol=1e-03,ge
     df = structure
     bk = structure_ref
     indexes = []
-    new_sites=[]
+    new_sites = []
     for s in df:
-        check,index = is_site_in_structure_coords(s,bk,tol=tol)
+        check, index = is_site_in_structure_coords(s, bk, tol=tol)
         if check:
             indexes.append(index)
-    for w in range(0,len(bk)):
-        new_sites.insert(indexes[w],df[w])
+    for w in range(0, len(bk)):
+        new_sites.insert(indexes[w], df[w])
     for s in extra_sites:
         new_sites.append(s)
-            
+
     new_structure = df.copy()
-    new_structure._sites = new_sites 
+    new_structure._sites = new_sites
     if get_indexes:
         return new_structure, indexes
     else:
@@ -227,7 +230,7 @@ def view_structure_with_ase(structures):
     First the Structure objects are converted into an ase Atom object, then "view" is used to visualize them.
     """
     if type(structures) == list:
-        atoms=[]
+        atoms = []
         for s in structures:
             atoms.append(AseAtomsAdaptor.get_atoms(s))
     else:
@@ -236,7 +239,7 @@ def view_structure_with_ase(structures):
     return
 
 
-def write_extxyz_file(file,structure,structure_ref=None,displacements=False):
+def write_extxyz_file(file, structure, structure_ref=None, displacements=False):
     """
     Write extxyz format. Displacements can be included for visualization in OVITO. 
 
@@ -254,28 +257,19 @@ def write_extxyz_file(file,structure,structure_ref=None,displacements=False):
     atoms = AseAtomsAdaptor.get_atoms(structure)
     if displacements:
         disp = get_displacement_vectors(structure_ref, structure)
-        atoms.arrays.update({'disp':disp})
+        atoms.arrays.update({'disp': disp})
     if not op.exists(op.dirname(file)):
         os.makedirs(op.dirname(file))
-    atoms.write(file,format='extxyz')
+    atoms.write(file, format='extxyz')
     return
 
 
-def write_xdatcar_from_structures(structures,file='XDATCAR'):
+def write_xdatcar_from_structures(structures, file='XDATCAR'):
     """
     Write XDATCAR file from a list of structures. The first structure determines the reference for the Trajectory object.
     """
-    traj = Trajectory.from_structures(structures,constant_lattice=True) 
+    traj = Trajectory.from_structures(structures, constant_lattice=True)
     if not op.exists(op.dirname(file)):
         os.makedirs(op.dirname(file))
     traj.write_Xdatcar(file)
     return
-    
-    
-    
-    
-    
-    
-    
-    
-    

@@ -6,7 +6,8 @@ Created on Thu Jun  1 12:06:45 2023
 @author: villa
 """
 
-def get_dict_from_line_string(dict_string,convert_to_float=True):
+
+def get_dict_from_line_string(dict_string, convert_to_float=True):
     """
     Convert a string in the format "key1 value1 key2 value2 ..." to a dictionary.
 
@@ -34,7 +35,7 @@ def get_dict_from_line_string(dict_string,convert_to_float=True):
     return dictionary
 
 
-def round_floats(obj,decimals=2):
+def round_floats(obj, decimals=2):
     """
     Round floats in an object (float, dict, tuple or list)
 
