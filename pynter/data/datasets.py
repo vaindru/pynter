@@ -1,4 +1,3 @@
-
 import os
 import os.path as op
 import pandas as pd
@@ -10,18 +9,19 @@ from pynter.slurm.interface import HPCInterface
 from pynter.slurm.job_settings import JobSettings
 from pynter.tools.utils import get_object_feature, select_objects, sort_objects
 
-def _check_job_script(job_script_filenames,files):
+
+def _check_job_script(job_script_filenames, files):
     """
     Check if job script names are in a list of files. Can be either a str or list of str
     """
     check = False
-    if isinstance(job_script_filenames,str):    
+    if isinstance(job_script_filenames, str):
         if job_script_filenames in files:
-            check= True
+            check = True
             job_script_filename = job_script_filenames
         else:
             job_script_filename = None
-    elif isinstance(job_script_filenames,list):
+    elif isinstance(job_script_filenames, list):
         job_script_filename = None
         for s in job_script_filenames:
             if s in files:
@@ -31,10 +31,10 @@ def _check_job_script(job_script_filenames,files):
     else:
         raise ValueError('job_script_filenames must be a string or a list of strings')
 
-    return check,job_script_filename
+    return check, job_script_filename
 
 
-def find_jobs(path,job_script_filenames=None,sort='name',load_outputs=True,jobs_kwargs=None):
+def find_jobs(path, job_script_filenames=None, sort='name', load_outputs=True, jobs_kwargs=None):
     """
     Find jobs in all folders and subfolders contained in path.
     The folder containing jobs are selected based on the presence of the file job_script_filename
@@ -61,24 +61,23 @@ def find_jobs(path,job_script_filenames=None,sort='name',load_outputs=True,jobs_
 
     """
     jobs = []
-    job_script_filenames = job_script_filenames if job_script_filenames else JobSettings().filename 
-    for root , dirs, files in os.walk(path):
+    job_script_filenames = job_script_filenames if job_script_filenames else JobSettings().filename
+    for root, dirs, files in os.walk(path):
         if files != []:
-            check_job_script, job_script_filename = _check_job_script(job_script_filenames,files)
+            check_job_script, job_script_filename = _check_job_script(job_script_filenames, files)
             if check_job_script:
-                j = get_job_from_directory(path=root,job_script_filename=job_script_filename,
-                                           load_outputs=load_outputs,jobs_kwargs=jobs_kwargs)
+                j = get_job_from_directory(path=root, job_script_filename=job_script_filename,
+                                           load_outputs=load_outputs, jobs_kwargs=jobs_kwargs)
                 jobs.append(j)
     if sort:
-        jobs = Dataset().sort_jobs(jobs_to_sort=jobs,features=sort)
-                
+        jobs = Dataset().sort_jobs(jobs_to_sort=jobs, features=sort)
+
     return jobs
 
 
-
 class Dataset:
-    
-    def __init__(self,jobs=None,path=None,name=None,sort='name'): 
+
+    def __init__(self, jobs=None, path=None, name=None, sort='name'):
         """
         Class to store sets of calculations
 
@@ -105,40 +104,37 @@ class Dataset:
         if jobs:
             self._group_jobs()
             if sort:
-                self.sort_jobs(reset=True,features=sort)
+                self.sort_jobs(reset=True, features=sort)
 
         self._localdir = HPCInterface().localdir
         self._workdir = HPCInterface().workdir
-        self.path_relative = self.path.replace(self._localdir,'')
-        
+        self.path_relative = self.path.replace(self._localdir, '')
+
         self.path_in_hpc = self._workdir + self.path_relative
 
-
-    def __str__(self):     
+    def __str__(self):
         return self.jobs_table().__str__()
-            
+
     def __repr__(self):
         return self.__str__()
-    
+
     def __iter__(self):
         return self.jobs.__iter__()
-    
-    def __getitem__(self,index):
+
+    def __getitem__(self, index):
         return self.jobs.__getitem__(index)
 
-
-    def as_dict(self,**kwargs):
+    def as_dict(self, **kwargs):
         d = {"@module": self.__class__.__module__,
              "@class": self.__class__.__name__,
-             #"path":self.path, old path version in dict
-             "path_relative":self.path_relative,
-             "name":self.name,
-             "jobs":[j.as_dict(**kwargs) for j in self.jobs],
-             "sort":self.sort}
+             # "path":self.path, old path version in dict
+             "path_relative": self.path_relative,
+             "name": self.name,
+             "jobs": [j.as_dict(**kwargs) for j in self.jobs],
+             "sort": self.sort}
         return d
-    
 
-    def to_json(self,path='',**kwargs):
+    def to_json(self, path='', **kwargs):
         """
         Save Dataset object as json string or file.
 
@@ -156,18 +152,17 @@ class Dataset:
         """
         d = self.as_dict(**kwargs)
         if path == '':
-            path = op.join(self.path,self.name+'.json')
+            path = op.join(self.path, self.name + '.json')
         if path:
-            with open(path,'w') as file:
-                json.dump(d,file)
+            with open(path, 'w') as file:
+                json.dump(d, file)
             return
         else:
-            return d.__str__()   
+            return d.__str__()
 
-    
     @classmethod
-    def from_dict(cls,d):
-        #ensure compatibility with old path format
+    def from_dict(cls, d):
+        # ensure compatibility with old path format
         if 'path_relative' in d.keys() and d['path_relative']:
             path = HPCInterface().localdir + d['path_relative']
         elif 'path' in d.keys():
@@ -177,10 +172,9 @@ class Dataset:
         for j in d['jobs']:
             jobs.append(MontyDecoder().process_decoded(j))
         sort = d['sort']
-        
-        return cls(jobs,path,name,sort)
-    
-    
+
+        return cls(jobs, path, name, sort)
+
     @staticmethod
     def from_json(path_or_string):
         """
@@ -203,11 +197,9 @@ class Dataset:
         else:
             d = json.loads(path_or_string)
         return Dataset.from_dict(d)
-        
-    
-    
+
     @staticmethod
-    def from_directory(path=None,job_script_filenames='job.sh',sort='name',load_outputs=True,jobs_kwargs=None): 
+    def from_directory(path=None, job_script_filenames='job.sh', sort='name', load_outputs=True, jobs_kwargs=None):
         """
         Static method to build Dataset object from a directory. Jobs are selected based on where the job bash script
         is present. VaspJobs are selected based on where all input files are present (INCAR,KPOINTS,POSCAR,POTCAR).
@@ -228,12 +220,11 @@ class Dataset:
             from directory for each job class.
         """
         path = path if path else os.getcwd()
-        jobs = find_jobs(path,job_script_filenames=job_script_filenames,sort='name',
-                         load_outputs=load_outputs,jobs_kwargs=jobs_kwargs) 
-        
-        return  Dataset(path=path,jobs=jobs,sort=sort)
-    
-    
+        jobs = find_jobs(path, job_script_filenames=job_script_filenames, sort='name',
+                         load_outputs=load_outputs, jobs_kwargs=jobs_kwargs)
+
+        return Dataset(path=path, jobs=jobs, sort=sort)
+
     @property
     def groups(self):
         """Directory names of the first subdirectories in the dataset path."""
@@ -241,14 +232,13 @@ class Dataset:
         commonpath = op.commonpath([op.abspath(j.path) for j in self.jobs])
         grps = []
         for j in self.jobs:
-            job_group = op.relpath(op.abspath(j.path),start=commonpath).split('/')[0]
+            job_group = op.relpath(op.abspath(j.path), start=commonpath).split('/')[0]
             if job_group not in grps:
                 grps.append(job_group)
         for g in grps:
             if list(g)[0] != '.':
                 groups.append(g)
         return groups
-
 
     def _group_jobs(self):
         """
@@ -259,18 +249,17 @@ class Dataset:
         path = op.abspath(self.path)
         groups = self.groups
         for group in groups:
-            group_path = op.join(path,group)
+            group_path = op.join(path, group)
             for job in self.jobs:
                 jpath = op.abspath(job.path)
                 if f'/{group}/' in jpath or op.basename(jpath) == group:
-                    nodes = jpath.replace(op.commonpath([group_path,jpath]),'')
+                    nodes = jpath.replace(op.commonpath([group_path, jpath]), '')
                     job.group = group
                     job.nodes = nodes
                     job.node_points = nodes.split('/')[1:]
         return
 
-
-    def add_jobs(self,jobs,regroup=True):
+    def add_jobs(self, jobs, regroup=True):
         """
         Add Jobs to Dataset.
 
@@ -292,8 +281,8 @@ class Dataset:
             self.regroup_jobs(path=commonpath)
         return
 
-    
-    def add_jobs_from_directory(self,path,job_script_filenames='job.sh',sort='name',load_outputs=True,regroup=True):
+    def add_jobs_from_directory(self, path, job_script_filenames='job.sh', sort='name', load_outputs=True,
+                                regroup=True):
         """
         Add jobs to the Dataset searching all folders and subfolders contained in given path. 
         Jobs are selected based on where the job bash script is present. 
@@ -310,18 +299,17 @@ class Dataset:
             Sort list of jobs by feature. If False or None jobs are not sorted. The default is 'name'.
         regroup : (bool), optional
             Regroup jobs after adding new jobs list, self.path is set to the commonpath. The default is True.
-        """        
+        """
         path = op.abspath(path)
-        jobs = find_jobs(path,job_script_filenames=job_script_filenames,sort=sort,load_outputs=load_outputs)
-        self.add_jobs(jobs,False)
+        jobs = find_jobs(path, job_script_filenames=job_script_filenames, sort=sort, load_outputs=load_outputs)
+        self.add_jobs(jobs, False)
         if regroup:
-            commonpath = op.commonpath([path,self.path])
+            commonpath = op.commonpath([path, self.path])
             self.regroup_jobs(path=commonpath)
         return
- 
 
-    def create_job(self,cls,group='',nodes='',inputs=None,job_settings=None,
-                   outputs=None,job_script_filename='job.sh',name=None):
+    def create_job(self, cls, group='', nodes='', inputs=None, job_settings=None,
+                   outputs=None, job_script_filename='job.sh', name=None):
         """
         Create Job object and add it to the dataset
 
@@ -344,32 +332,30 @@ class Dataset:
         name : (str)
             Name of the job. If None the name is searched in the job script.
         """
-        
-        path = op.join(self.path,group,nodes)        
-        job = cls(path=path,inputs=inputs,job_settings=job_settings,outputs=outputs,
-                       job_script_filename=job_script_filename,name=name)
+
+        path = op.join(self.path, group, nodes)
+        job = cls(path=path, inputs=inputs, job_settings=job_settings, outputs=outputs,
+                  job_script_filename=job_script_filename, name=name)
         job.group = group
         job.nodes = nodes
         if self.jobs:
             self.jobs.append(job)
         else:
             self.jobs = [job]
-        
-        return
-        
 
-    def delete_jobs(self,jobs,delete_files=True,safety=True):
-        
+        return
+
+    def delete_jobs(self, jobs, delete_files=True, safety=True):
+
         for j in jobs:
             if delete_files:
                 j.delete_job_files(safety=safety)
             self.jobs.remove(j)
-            print('Job "%s" removed from Dataset'%j.name)
+            print('Job "%s" removed from Dataset' % j.name)
         return
-        
-            
-    def filter_jobs(self,inplace=False,jobs=None,mode='and',exclude=False,names=None,groups=None,
-                    common_group=None,common_node=None,function=None,**kwargs):
+
+    def filter_jobs(self, inplace=False, jobs=None, mode='and', exclude=False, names=None, groups=None,
+                    common_group=None, common_node=None, function=None, **kwargs):
         """
         Function to filter jobs based on different selection criteria.
         The priority of the selection criterion follows the order of the input
@@ -407,24 +393,23 @@ class Dataset:
             Dataset object with filtered jobs. If inplace is True self.jobs is updated with
             the selected jobs.
         """
-        jobs = self.select_jobs(jobs=jobs,mode=mode,exclude=exclude,names=names,groups=groups,
-                                common_group=common_group,common_node=common_node,
-                                function=function,**kwargs)
-        
+        jobs = self.select_jobs(jobs=jobs, mode=mode, exclude=exclude, names=names, groups=groups,
+                                common_group=common_group, common_node=common_node,
+                                function=function, **kwargs)
+
         if inplace:
-            self.__init__(jobs,self.path,self.name,self.sort)
+            self.__init__(jobs, self.path, self.name, self.sort)
             return
         else:
-            return Dataset(jobs,self.path,self.name,self.sort)
-        
-    
-    def get_jobs_inputs(self,**kwargs):
+            return Dataset(jobs, self.path, self.name, self.sort)
+
+    def get_jobs_inputs(self, **kwargs):
         """Read inputs for all jobs from the data stored in the respective directories"""
         for j in self.jobs:
             j.get_inputs(**kwargs)
         return
 
-    def get_jobs_outputs(self,update_only=False,**kwargs):
+    def get_jobs_outputs(self, update_only=False, **kwargs):
         """Read output for all jobs from the data stored in respective directories"""
         for j in self.jobs:
             if update_only:
@@ -433,8 +418,8 @@ class Dataset:
             else:
                 j.get_outputs(**kwargs)
         return
-            
-    def get_jobs_output_properties(self,**kwargs):
+
+    def get_jobs_output_properties(self, **kwargs):
         """
         Get Job output attributes by reading data in outputs dictionary
         """
@@ -442,8 +427,7 @@ class Dataset:
             j.get_output_properties(**kwargs)
         return
 
-    
-    def jobs_table(self,jobs=[],status=False,display=[]):
+    def jobs_table(self, jobs=[], status=False, display=[]):
         """
         Create a pandas DataFrame object to display the jobs in the dataset.
 
@@ -462,7 +446,7 @@ class Dataset:
         df : (DataFrame object)
 
         """
-        jobs = jobs if jobs else self.jobs                           
+        jobs = jobs if jobs else self.jobs
         table = []
         index = []
         for j in jobs:
@@ -475,22 +459,21 @@ class Dataset:
             if status:
                 d['status'] = j.status()
             for feature in display:
-                if isinstance(feature,list):
+                if isinstance(feature, list):
                     key = feature[0]
                     for k in feature[1:]:
-                        key = key + '["%s"]'%k
+                        key = key + '["%s"]' % k
                 else:
                     key = feature
-                d[key] = get_object_feature(j,feature)
+                d[key] = get_object_feature(j, feature)
             table.append(d)
-            
-        df = pd.DataFrame(table,index=index)
-        df.index.name = 'job_name'
-        
-        return df
-            
 
-    def insert_jobs_in_database(self,safety=True,check_convergence=True,**kwargs):
+        df = pd.DataFrame(table, index=index)
+        df.index.name = 'job_name'
+
+        return df
+
+    def insert_jobs_in_database(self, safety=True, check_convergence=True, **kwargs):
         """
         Insert all jobs into relative database based on their class.
 
@@ -504,11 +487,10 @@ class Dataset:
             Args to pass to specific Job Drone.
         """
         for j in self.jobs:
-            j.insert_in_database(safety=safety,check_convergence=check_convergence,**kwargs)
+            j.insert_in_database(safety=safety, check_convergence=check_convergence, **kwargs)
         return
 
-
-    def queue(self,stdouts=False):
+    def queue(self, stdouts=False):
         """
         Display queue from HPC. If stdouts is True returns out and err strings.
         
@@ -520,14 +502,13 @@ class Dataset:
             Error.
         """
         hpc = HPCInterface()
-        stdout,stderr = hpc.qstat()
+        stdout, stderr = hpc.qstat()
         if stdouts:
-            return stdout,stderr
+            return stdout, stderr
         else:
             return
 
-
-    def regroup_jobs(self,path=None):
+    def regroup_jobs(self, path=None):
         """
         Regroup jobs from a given path. If path is None the current self.path is used.
         This method is different from _group_jobs since it will reset the self.path 
@@ -539,20 +520,19 @@ class Dataset:
         groups = self.groups
         for group in groups:
             gjobs[group] = {}
-            group_path = op.join(path,group)
+            group_path = op.join(path, group)
             for job in self.jobs:
                 if group in job.path:
                     jpath = op.abspath(job.path)
-                    nodes = jpath.replace(op.commonpath([group_path,jpath]),'')
+                    nodes = jpath.replace(op.commonpath([group_path, jpath]), '')
                     gjobs[group][nodes] = job
                     job.group = group
-                    job.nodes = nodes 
+                    job.nodes = nodes
                     job.node_points = nodes.split('/')[1:]
         return
-            
 
-    def select_jobs(self,jobs=None,mode='and',exclude=False,names=None,groups=None,common_group=None,
-                    common_node=None,function=None,**kwargs):
+    def select_jobs(self, jobs=None, mode='and', exclude=False, names=None, groups=None, common_group=None,
+                    common_node=None, function=None, **kwargs):
         """
         Function to filter jobs based on different selection criteria.
         The priority of the selection criterion follows the order of the input
@@ -587,37 +567,40 @@ class Dataset:
         output_jobs : (list)
             List with selected jobs.
         """
-        input_jobs = jobs.copy() if jobs else self.jobs.copy() 
+        input_jobs = jobs.copy() if jobs else self.jobs.copy()
         functions = []
-        
+
         if names:
             def fnames(job):
                 return job.name in names
+
             functions.append(fnames)
-        
+
         if groups:
             def fgroups(job):
                 return job.group in groups
+
             functions.append(fgroups)
-        
+
         if common_group:
             def fcommon_group(job):
                 return common_group in job.group
+
             functions.append(fcommon_group)
-        
+
         if common_node:
             def fcommon_node(job):
                 return common_node in job.nodes
+
             functions.append(fcommon_node)
-        
+
         if function:
             functions.append(function)
-            
-        return select_objects(objects=input_jobs,mode=mode,exclude=exclude,
-                              functions=functions,**kwargs)
 
+        return select_objects(objects=input_jobs, mode=mode, exclude=exclude,
+                              functions=functions, **kwargs)
 
-    def sort_jobs(self,jobs_to_sort=None,features=['name'],reset=True,reverse=False):
+    def sort_jobs(self, jobs_to_sort=None, features=['name'], reset=True, reverse=False):
         """
         Sort jobs according to the target feature. If list of jobs is not given
         and reset is True the attribute self.jobs is rewritten with the sorted list.
@@ -639,7 +622,7 @@ class Dataset:
         sorted_jobs : (list)
             List of sorted Job objects.
         """
-        if not isinstance(features,list):
+        if not isinstance(features, list):
             features = [features]
         jobs = jobs_to_sort if jobs_to_sort else self.jobs
         sorted_jobs = sort_objects(jobs, features, reverse)
@@ -654,8 +637,7 @@ class Dataset:
         else:
             return sorted_jobs
 
-
-    def sync_dataset_from_hpc(self,stdouts=False,exclude=None,dry_run=False):
+    def sync_dataset_from_hpc(self, stdouts=False, exclude=None, dry_run=False):
         """
         Sync Dataset project folder from HPC to local machine
 
@@ -677,15 +659,15 @@ class Dataset:
         """
         hpc = HPCInterface()
         abs_path = op.abspath(self.path)
-        localdir = abs_path 
-        stdout,stderr = hpc.rsync_from_hpc(localdir=localdir,remotedir=self.path_in_hpc,exclude=exclude,dry_run=dry_run)
+        localdir = abs_path
+        stdout, stderr = hpc.rsync_from_hpc(localdir=localdir, remotedir=self.path_in_hpc, exclude=exclude,
+                                            dry_run=dry_run)
         if stdouts:
-            return stdout,stderr
+            return stdout, stderr
         else:
             return
 
-
-    def sync_dataset_to_hpc(self,stdouts=False,exclude=None,dry_run=False):
+    def sync_dataset_to_hpc(self, stdouts=False, exclude=None, dry_run=False):
         """
         Sync Dataset project folder from local machine to HPC
 
@@ -707,26 +689,22 @@ class Dataset:
         """
         hpc = HPCInterface()
         abs_path = op.abspath(self.path)
-        localdir = abs_path 
-        stdout,stderr = hpc.rsync_to_hpc(localdir=localdir,remotedir=self.path_in_hpc,exclude=exclude,dry_run=dry_run)
+        localdir = abs_path
+        stdout, stderr = hpc.rsync_to_hpc(localdir=localdir, remotedir=self.path_in_hpc, exclude=exclude,
+                                          dry_run=dry_run)
         if stdouts:
-            return stdout,stderr
+            return stdout, stderr
         else:
             return
 
-           
     def sync_jobs(self):
         """Sync job data from HPC to local machine"""
         for j in self.jobs:
             j.sync_from_hpc()
         self.get_jobs_outputs()
         return
-        
-                
+
     def write_jobs_input(self):
         """Write jobs inputs to files"""
         for job in self.jobs:
             job.write_input()
-            
-        
-        
