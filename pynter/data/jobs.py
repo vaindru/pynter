@@ -347,7 +347,10 @@ class Job:
             Job status. Possible status are 'PENDING','RUNNING','NOT IN QUEUE','FAILED','COMPLETED'.
         """
         if self._id is None:
-            self.job_id()
+            try:
+                self.job_id()
+            except ValueError:
+                return 'NOT IN QUEUE'
 
         hpc = HPCInterface()
         stdout, stderr = hpc.command(cmd=f"sacct -j {self._id} --brief", printout=False)
