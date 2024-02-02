@@ -234,8 +234,8 @@ class DatasetAnalysis:
 
         return plt
 
-    def plot_U_dependency(self, element_orbital: tuple[str, str], lattice_parameters: tuple = ('a',),
-                          ref_egap: float = None):
+    def plot_UJ_dependency(self, element_orbital: tuple[str, str], par: str = 'U', lattice_parameters: tuple = ('a',),
+                           ref_egap: float = None):
         """
         Plot dependency of lattice parameter and energy gap on U parameter assigned
         to a specific element
@@ -244,6 +244,8 @@ class DatasetAnalysis:
         ----------
         element_orbital : Tuple(str, str)
             Tuple of 2 strings for element and orbital to which U parameter is applied.
+        par : (str), optional
+            against which parameter plot the variance 'U' (default) or 'J'.
         lattice_parameters : (str), optional
             Lattice parameter whose dependency is evaluated. The default is 'a'.
         ref_egap: (float, optional)
@@ -255,11 +257,20 @@ class DatasetAnalysis:
         """
         el = Element(element_orbital[0])
         U_list = []
+        J_list = []
         lattice_parameters = set(lattice_parameters)
         lattice_param_values = {p: [] for p in lattice_parameters}
         energy_gap = []
         for j in self.jobs:
-            U_list.append(j.hubbards[el])
+            try:
+                U_list.append(j.hubbards['U'][el])
+            except KeyError:
+                U_list.append(0)
+            try:
+                J_list.append(j.hubbards['J'][el])
+            except KeyError:
+                J_list.append(0)
+
             lattice = j.final_structure.lattice
             for l_param in lattice_parameters:
                 lattice_param_values[l_param].append(getattr(lattice, l_param))
@@ -267,26 +278,22 @@ class DatasetAnalysis:
 
         df = pd.DataFrame()
         df['U'] = U_list
+        df['J'] = J_list
         for l_param in lattice_param_values:
             df[l_param] = lattice_param_values[l_param]
         df['energy_gap'] = energy_gap
-        df = df.sort_values('U')
 
         fig, (ax_lat, ax_egap) = plt.subplots(1, 2, sharex=True, figsize=(12, 8))
 
-        x_label = f'U on {el.name}-{element_orbital[1]}'
+        par_set = {'U': set(df['U'].to_list()), 'J': set(df['J'].to_list())}
+
+        x_label = f'{par} on {el.name}-{element_orbital[1]}'
         ax_lat.set_xlabel(x_label)
         ax_lat.set_ylabel('($\AA$)')
-        for l_param in lattice_param_values:
-            ax_lat.plot(df['U'].to_list(), df[l_param].to_list(), 'o--')
-        ax_lat.legend(lattice_param_values.keys())
-        ax_lat.grid()
-
         ax_egap.set_xlabel(x_label)
         ax_egap.set_ylabel('Energy gap (eV)')
-        ax_egap.plot(df['U'].to_list(), df['energy_gap'].to_list(), 'o--')
+        ax_lat.grid()
         ax_egap.grid()
-
         if ref_egap is not None:
             ax_egap2 = ax_egap.secondary_yaxis('right',
                                                functions=(lambda band_gap: (band_gap - ref_egap) / ref_egap * 100,
@@ -295,6 +302,18 @@ class DatasetAnalysis:
             ax_egap2.yaxis.set_major_formatter(mtick.PercentFormatter(decimals=1))
             ax_egap2.set_ylabel('ΔEnergy gap (%)')
 
-        fig.tight_layout()
+        sub_par = 'J' if par == 'U' else 'U'
+        for p in par_set[sub_par]:
+            sub_df = df.loc[df[sub_par] == p].sort_values(par)
 
+            for l_param in lattice_param_values:
+                lat_label = f'{l_param}_{sub_par}{p}' if p != 0 else f'{l_param}'
+                ax_lat.plot(sub_df[par].to_list(), sub_df[l_param].to_list(), 'o--', label=lat_label)
+
+            egap_label = f'{sub_par}{p}'
+            ax_egap.plot(sub_df[par].to_list(), sub_df['energy_gap'].to_list(), 'o--', label=egap_label)
+
+        ax_lat.legend()
+        ax_egap.legend()
+        fig.tight_layout()
         return plt

@@ -765,7 +765,6 @@ class Schemes(InputSets):
         List of VaspJob objects
         """
         jobs = []
-
         if ldauu_dict is None:
             ldauu_dict = {el: 0 for el in self.structure.composition.elements}
         else:

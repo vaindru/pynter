@@ -465,8 +465,6 @@ class Dataset:
         jobs = jobs if jobs else self.jobs                           
         table = []
         index = []
-        if status:
-            stdout,stderr = HPCInterface().qstat(printout=False)
         for j in jobs:
             index.append(j.name)
             d = {}
@@ -475,7 +473,7 @@ class Dataset:
             d['nodes'] = j.nodes
             d['is_converged'] = j.is_converged
             if status:
-                d['status'] = j.get_status_from_queue(stdout)
+                d['status'] = j.status()
             for feature in display:
                 if isinstance(feature,list):
                     key = feature[0]

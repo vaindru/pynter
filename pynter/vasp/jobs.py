@@ -304,26 +304,35 @@ class VaspJob(Job):
     @property
     def hubbards(self):
         """
-        Generate dictionary with U paramenters from LDAUU tag in INCAR file
+        Generate dictionary with U and J paramenters from LDAUU tag in INCAR file
 
         Returns
         -------
         U_dict : (dict)
             Dictionary with Elements as keys and U parameters as values.
         """
-        U_dict = {}
+        UJ_dict = {'U': {}, 'J': {}}
         incar = self.incar
         if 'LDAUU' in incar.keys():
             ldauu = incar['LDAUU']
             elements = self.initial_structure.composition.elements
             if isinstance(ldauu, str):
                 ldauu = ldauu.split()
-            for i in range(0, len(ldauu)):
-                U_dict[elements[i]] = int(ldauu[i])
+            UJ_dict['U'] = {elements[i]: int(ldauu[i]) for i in range(0, len(ldauu))}
         else:
             print(f'No LDAUU tag present in INCAR in Job "{self.name}"')
 
-        return U_dict
+        if 'LDAUJ' in incar.keys():
+            ldauj = incar['LDAUJ']
+            elements = self.initial_structure.composition.elements
+            if isinstance(ldauj, str):
+                ldauj = ldauj.split()
+            UJ_dict['J'] = {elements[i]: int(ldauj[i]) for i in range(0, len(ldauj))}
+        else:
+            pass
+            # print(f'No LDAUJ tag present in INCAR in Job "{self.name}"')
+
+        return UJ_dict
 
     @property
     def initial_structure(self):
