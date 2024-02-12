@@ -314,6 +314,7 @@ class DatasetAnalysis:
             ax_egap.plot(sub_df[par].to_list(), sub_df['energy_gap'].to_list(), 'o--', label=egap_label)
 
         ax_lat.legend()
-        ax_egap.legend()
+        if len(par_set[sub_par]) > 1:
+            ax_egap.legend()
         fig.tight_layout()
         return plt
