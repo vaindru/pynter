@@ -185,4 +185,4 @@ class PDPlotterAdder:
             Dictionary with fixed chemical potentials (values relative to reference phase). the format is {Element:chempot}
         """
         chempots_ref[variable_element] = mu
-        return self.chempots_analysis.calculate_single_chempot(comp, chempots_ref)
+        return self.pdh.calculate_single_chempot(comp, chempots_ref)
