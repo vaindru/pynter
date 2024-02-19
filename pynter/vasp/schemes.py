@@ -771,11 +771,13 @@ class Schemes(InputSets):
             if len(ldauu_dict) != len(self.structure.composition.elements):
                 raise ValueError('size of "ldauu_dict" needs to be the same as the number of species in Structure')
 
-        if ldauj_dict is None and j_range is not None:
-            ldauj_dict = {el: 0 for el in self.structure.composition.elements}
-        else:
-            if len(ldauj_dict) != len(self.structure.composition.elements):
-                raise ValueError('size of "ldauj_dict" needs to be the same as the number of species in Structure')
+        # Set J parameter if specified
+        if j_range is not None:
+            if ldauj_dict is None:
+                ldauj_dict = {el: 0 for el in self.structure.composition.elements}
+            else:
+                if len(ldauj_dict) != len(self.structure.composition.elements):
+                    raise ValueError('size of "ldauj_dict" needs to be the same as the number of species in Structure')
 
         ldaul_dict = {el: -1 for el in self.structure.composition.elements}
         ldaul_dict[Element(specie)] = orbital
