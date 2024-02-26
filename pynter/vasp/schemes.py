@@ -825,11 +825,11 @@ class Schemes(InputSets):
         jobs.append(vaspjob)
 
         sn = 2
-        vaspjob = self.pbe_dos(setname=scheme_name + '_%i' % sn, pathname=stepnames[sn - 1])
+        vaspjob = self.pbe_dos(setname=scheme_name + '_%i' % sn, pathname=stepnames[sn - 1], kmesh=kmesh_dos)
         jobs.append(vaspjob)
 
         sn = 3
-        vaspjob = self.pbe_bs(setname=scheme_name + '_%i' % sn, pathname=stepnames[sn - 1])
+        vaspjob = self.pbe_bs(setname=scheme_name + '_%i' % sn, pathname=stepnames[sn - 1], kpoints_bs=kpoints_bs)
         jobs.append(vaspjob)
 
         return jobs
