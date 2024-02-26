@@ -121,7 +121,8 @@ class Slurm(dict, MSONable):
         Get list of lines containing #SBATCH arguments for bash script
         """
         lines = []
-        lines.append('#!/bin/sh\n')
+        head = SETTINGS['job_settings']['head']
+        lines.append(head + '\n')
         for key, value in self.items():
             if value is not None:
                 printed_value = f'={value}' if value else ''

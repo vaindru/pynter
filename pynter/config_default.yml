@@ -12,6 +12,7 @@ dbconfig:
     port: 27017
     user: null
 job_settings:
+  head: '#!/bin/sh'
   slurm:
     account: ''
     error: err.%j
