@@ -245,6 +245,8 @@ class JobSettings(dict, MSONable):
         f = self.slurm.get_bash_script_lines()
         if self.array_size:
             f.append('#SBATCH --array=1-%i%%1\n' % self.array_size)
+        if SETTINGS['job_settings']['src'] is not None:
+            f.append(SETTINGS['job_settings']['src'] + '\n')
         f.append('\n')
         f.append('module purge\n')
         if self.export:
