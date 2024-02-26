@@ -244,7 +244,7 @@ class Job:
         if sync:
             self.sync_to_hpc()
         stdout, stderr = hpc.sbatch(path=self.path_in_hpc, job_script_filename=self.job_script_filename)
-        self._id = int(re.search(r'\nSubmitted batch job\s(.*?)\n', stdout)[1])
+        self._id = int(re.search(r'job\s(.*?)\n', stdout)[1])
 
         return stdout, stderr
 
