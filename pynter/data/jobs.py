@@ -244,9 +244,12 @@ class Job:
         if sync:
             self.sync_to_hpc()
         stdout, stderr = hpc.sbatch(path=self.path_in_hpc, job_script_filename=self.job_script_filename)
-        self._id = int(re.search(r'Submitted batch job\s(.*?)\n', stdout)[1])
+        try:
+            self._id = int(re.search(r'Submitted batch job\s(.*?)\n', stdout)[1])
+            return stdout, stderr
+        except TypeError:
+            raise ConnectionError('No connection to HPC', stdout, stderr)
 
-        return stdout, stderr
 
     def sync_from_hpc(self, stdouts=False, exclude=None, dry_run=False):
         """
