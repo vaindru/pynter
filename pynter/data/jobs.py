@@ -169,7 +169,7 @@ class Job:
     def insert_in_database(self):
         pass
 
-    def job_id(self, from_output=False):
+    def job_id(self, from_output=False, local=False):
         """
         Get job ID from the queue on HPC
         """
@@ -183,11 +183,18 @@ class Job:
             out_pattern = self.job_settings['slurm']['output'].split('%j')[0]
             if not out_pattern:
                 raise ValueError('Output files must end with "%j"')
-            command = f'find {self.path_in_hpc} -type f -name "{out_pattern}*"'
-            stdout, stderr = hpc.command(cmd=command, printout=False)
-            if not stdout:
-                raise ValueError(f'job named "{self.name}" has no output files')
-            self._id = int(stdout.splitlines()[-1].split(out_pattern)[-1])
+            if local:
+                out_files = [int(f.split(out_pattern)[-1]) for f in os.listdir(self.path) if f.startswith('out.')]
+                if out_files:
+                    self._id = max(out_files)
+                else:
+                    raise ValueError(f'job named "{self.name}" has no output files')
+            else:
+                command = f'find {self.path_in_hpc} -type f -name "{out_pattern}*"'
+                stdout, stderr = hpc.command(cmd=command, printout=False)
+                if not stdout:
+                    raise ValueError(f'job named "{self.name}" has no output files')
+                self._id = int(stdout.splitlines()[-1].split(out_pattern)[-1])
             return self._id
 
         stdout, stderr = hpc.qstat(printout=False)

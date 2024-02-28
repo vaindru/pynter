@@ -161,8 +161,14 @@ class VaspJob(Job):
         job_script_filename = job_script_filename if job_script_filename else JobSettings().filename
         job_settings = JobSettings.from_bash_file(path, filename=job_script_filename)
 
-        return VaspJob(path=path, inputs=inputs, job_settings=job_settings,
+        vaspjob = VaspJob(path=path, inputs=inputs, job_settings=job_settings,
                        outputs=outputs, job_script_filename=job_script_filename)
+        try:
+            vaspjob.job_id(from_output=True, local=True)
+        except ValueError:
+            pass
+
+        return vaspjob
 
     @staticmethod
     def from_json(path_or_string):
@@ -451,6 +457,14 @@ class VaspJob(Job):
         outputs = {}
         if op.isfile(op.join(self.path, 'vasprun.xml')):
             outputs['Vasprun'] = _read_vasprun(self.path, **kwargs)
+
+        if outputs['Vasprun'] is None:
+            return
+
+        try:
+            self.job_id(from_output=True, local=True)
+        except ValueError:
+            pass
 
         self.outputs = outputs
         if get_output_properties:
