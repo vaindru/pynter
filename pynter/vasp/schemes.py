@@ -228,7 +228,8 @@ class InputSets:
                 ldaul_dict: dict[Element: int] = None,
                 ldautype: int = None,
                 lmaxmix: int = None,
-                ldauprint: int = 1):
+                ldauprint: int = 1,
+                lasph = True):
         """
 
         Parameters
@@ -251,6 +252,7 @@ class InputSets:
         vaspjob.incar['LDAUPRINT'] = ldauprint
         vaspjob.incar['LMAXMIX'] = 2 if lmaxmix is None else lmaxmix
         vaspjob.incar['LDAUU'] = ' '.join([str(ldauu_dict[el]) for el in ldauu_dict])
+        vaspjob.incar['LASPH'] = '.TRUE.' if lasph else '.FALSE.'
 
         if ldauj_dict is not None:
             vaspjob.incar['LDAUTYPE'] = 3 if ldautype is None else ldautype
