@@ -2,5 +2,4 @@
 /build
 *.egg-info
 *.pyc
-*checkpoint.ipynb
-/ActiveBook.ipynb
+*.ipynb

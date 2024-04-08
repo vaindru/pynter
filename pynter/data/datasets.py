@@ -34,7 +34,7 @@ def _check_job_script(job_script_filenames, files):
     return check, job_script_filename
 
 
-def find_jobs(path, job_script_filenames=None, sort='name', load_outputs=True, jobs_kwargs=None):
+def find_jobs(path, job_script_filenames=None, sort='name', load_outputs=True, exclude=None, jobs_kwargs=None):
     """
     Find jobs in all folders and subfolders contained in path.
     The folder containing jobs are selected based on the presence of the file job_script_filename
@@ -50,6 +50,8 @@ def find_jobs(path, job_script_filenames=None, sort='name', load_outputs=True, j
         Sort list of jobs by features. If False or None jobs are not sorted. The default is 'name'.
     load_outputs : (bool)
         Load job outputs. The default is True.
+    exclude: (list), optional
+            List of folder names to exclude.
     jobs_kwargs : (dict), optional
         Dictionary with job class name as keys and kwargs as values. Kwargs to be used when importing job 
         from directory for each job class.
@@ -63,6 +65,8 @@ def find_jobs(path, job_script_filenames=None, sort='name', load_outputs=True, j
     jobs = []
     job_script_filenames = job_script_filenames if job_script_filenames else JobSettings().filename
     for root, dirs, files in os.walk(path):
+        if exclude is not None and any([ex in root[len(path):] for ex in exclude]):
+            continue
         if files != []:
             check_job_script, job_script_filename = _check_job_script(job_script_filenames, files)
             if check_job_script:
@@ -199,7 +203,8 @@ class Dataset:
         return Dataset.from_dict(d)
 
     @staticmethod
-    def from_directory(path=None, job_script_filenames='job.sh', sort='name', load_outputs=True, jobs_kwargs=None):
+    def from_directory(path=None, job_script_filenames='job.sh', sort='name', load_outputs=True,
+                       exclude=None, jobs_kwargs=None):
         """
         Static method to build Dataset object from a directory. Jobs are selected based on where the job bash script
         is present. VaspJobs are selected based on where all input files are present (INCAR,KPOINTS,POSCAR,POTCAR).
@@ -208,20 +213,22 @@ class Dataset:
         ----------
         path : (str)
             Parent directory of the dataset. If None the current wdir is used.
-       job_script_filenames : (str or list), optional
-            Filename of job bash script. The default is 'job.sh'. Can also be a list of strings if multiple 
+        job_script_filenames : (str or list), optional
+            Filename of job bash script. The default is 'job.sh'. Can also be a list of strings if multiple
             file names are present. The default is 'job.sh'.
         sort : (str or list), optional
             Sort list of jobs by feature. If False or None jobs are not sorted. The default is 'name'.
         load_outputs : (bool)
             Load job outputs. The default is True.
+        exclude: (list), optional
+            List of folder names to exclude.
         jobs_kwargs : (dict), optional
             Dictionary with job class name as keys and kwargs as values. Kwargs to be used when importing job 
             from directory for each job class.
         """
         path = path if path else os.getcwd()
         jobs = find_jobs(path, job_script_filenames=job_script_filenames, sort='name',
-                         load_outputs=load_outputs, jobs_kwargs=jobs_kwargs)
+                         load_outputs=load_outputs, exclude=exclude, jobs_kwargs=jobs_kwargs)
 
         return Dataset(path=path, jobs=jobs, sort=sort)
 
