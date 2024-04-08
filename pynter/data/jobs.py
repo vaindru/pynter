@@ -7,6 +7,7 @@ import re
 from pynter.slurm.job_settings import JobSettings
 from pynter.slurm.interface import HPCInterface
 from pynter.tools.utils import grep_list
+import copy
 
 
 class Job:
@@ -97,7 +98,7 @@ class Job:
         Copy Job object
         """
         path = self.path
-        inputs = self.inputs.copy() if self.inputs else None
+        inputs = copy.deepcopy(self.inputs) if self.inputs else None
         job_settings = self.job_settings.copy() if self.job_settings else None
         outputs = self.outputs.copy() if self.outputs else None
         job_script_filename = self.job_script_filename
