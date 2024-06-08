@@ -70,6 +70,10 @@ class DefectEntry(MSONable, metaclass=ABCMeta):
     def corrections(self):
         return self._corrections
 
+    @corrections.setter
+    def corrections(self, corrs):
+        self._corrections = corrs
+
     @property
     def data(self):
         """
